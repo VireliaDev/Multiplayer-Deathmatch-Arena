@@ -1,0 +1,23 @@
+﻿#pragma once
+
+#include "NativeGameplayTags.h"
+
+
+namespace GameTags
+{
+	//Input Tags
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Move);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Look);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Jump);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Crouch);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Sprint);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Aim);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Reload);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Shoot);
+	
+	
+	
+	
+	
+}
+
