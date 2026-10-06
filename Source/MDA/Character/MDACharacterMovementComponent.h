@@ -3,9 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MDACharacterMovementComponent.generated.h"
 
+
+class UAbilitySystemComponent;
+struct FGameplayTag;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MDA_API UMDACharacterMovementComponent : public UCharacterMovementComponent
@@ -13,15 +17,23 @@ class MDA_API UMDACharacterMovementComponent : public UCharacterMovementComponen
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
-	UMDACharacterMovementComponent();
-
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	
+	//Movement State Gameplay Tag
+	FGameplayTag CurrentLocomotionTag;
+	FGameplayTag ComputeLocomotionTag() const;
+	void SyncMovementTags();
+	void ResetMovementTags(UAbilitySystemComponent* ASC);
+	
+	
+	//Walking
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.01"))
+	float MinWalkSpeedThreshold = 10.f;
+	virtual float GetMaxSpeed() const override;
+	bool IsWalkingBlocked() const;
+	
+	
+	
 };

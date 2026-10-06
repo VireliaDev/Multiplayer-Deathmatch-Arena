@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
 #include "MDACharacter.generated.h"
 
@@ -13,16 +14,17 @@ class UInputAction;
 struct FInputActionValue;
 
 UCLASS()
-class MDA_API AMDACharacter : public ACharacter
+class MDA_API AMDACharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 
 public:
-	AMDACharacter();
+	AMDACharacter(const FObjectInitializer& ObjectInitializer);	
 	
-	
-	
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
 	//Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly , Category="Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -37,10 +39,10 @@ public:
 	TObjectPtr<UMDAInputConfig> InputConfig;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	
+protected:
 	//Movement
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
+	void Input_Move(const FInputActionValue& Value);
+	void Input_Look(const FInputActionValue& Value);
 	void RequestJump();
 	void RequestJumpEnd();
 	void RequestCrouch();
@@ -49,5 +51,9 @@ public:
 	void RequestSprintEnd();
 	
 	
+public:
+	//Ability System Component
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	void InitAbilitySystemComponent();
 	
 };

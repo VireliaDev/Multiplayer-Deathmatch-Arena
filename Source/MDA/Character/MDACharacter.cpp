@@ -3,15 +3,20 @@
 
 #include "MDACharacter.h"
 
+#include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
+#include "MDACharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
+#include "MDA/Framework/Player/MDAPlayerState.h"
 #include "MDA/Input/MDAEnhancedInputComponent.h"
 
 
-AMDACharacter::AMDACharacter()
+class UMDACharacterMovementComponent;
+
+AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(ObjectInitializer.SetDefaultSubobjectClass<UMDACharacterMovementComponent>(CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
@@ -27,7 +32,18 @@ AMDACharacter::AMDACharacter()
 
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	ThirdPersonCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	
+}
+
+void AMDACharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	InitAbilitySystemComponent();
+}
+
+void AMDACharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	InitAbilitySystemComponent();
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -50,40 +66,46 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	
 	// Moving
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Move,
-		ETriggerEvent::Triggered, this, &AMDACharacter::Move);
+		ETriggerEvent::Triggered, this, &AMDACharacter::Input_Move);
 
 	// Looking
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Look,
-		ETriggerEvent::Triggered, this, &AMDACharacter::Look);
+		ETriggerEvent::Triggered, this, &AMDACharacter::Input_Look);
 	
-	
+	// Jumping
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Jump,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestJump);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Jump,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestJumpEnd);
 	
 }
 
-void AMDACharacter::Move(const FInputActionValue& Value)
+void AMDACharacter::Input_Move(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 	AddMovementInput(GetActorRightVector(), MovementVector.X);
-	UE_LOG(LogPlayerInput, Display, TEXT("Moving"));
+	UE_LOG(LogPlayerInput, VeryVerbose, TEXT("Moving"));
 }
 
-void AMDACharacter::Look(const FInputActionValue& Value)
+void AMDACharacter::Input_Look(const FInputActionValue& Value)
 {
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
-	UE_LOG(LogPlayerInput, Display, TEXT("Looking"));
+	UE_LOG(LogPlayerInput, VeryVerbose, TEXT("Looking"));
 }
 
 void AMDACharacter::RequestJump()
 {
+	Jump();
 }
 
 void AMDACharacter::RequestJumpEnd()
 {
+	StopJumping();
 }
 
 void AMDACharacter::RequestCrouch()
@@ -100,4 +122,22 @@ void AMDACharacter::RequestSprint()
 
 void AMDACharacter::RequestSprintEnd()
 {
+}
+
+UAbilitySystemComponent* AMDACharacter::GetAbilitySystemComponent() const
+{
+	const AMDAPlayerState* PS = GetPlayerState<AMDAPlayerState>();
+	ensureMsgf(PS, TEXT("PlayerState is not of type AMDAPlayerState"));
+	return PS ? PS->GetAbilitySystemComponent() : nullptr;
+}
+
+void AMDACharacter::InitAbilitySystemComponent()
+{
+	AMDAPlayerState* PS = GetPlayerState<AMDAPlayerState>();
+	if (!PS) return;
+	PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
+
+	UMDACharacterMovementComponent* MovementComponent = Cast<UMDACharacterMovementComponent>(GetMovementComponent());
+	if (!MovementComponent) return;
+	MovementComponent->ResetMovementTags(PS->GetAbilitySystemComponent());
 }
