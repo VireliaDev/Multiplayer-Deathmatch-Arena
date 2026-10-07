@@ -1,6 +1,4 @@
-﻿#pragma once
-
-#include "MDAGameplayTags.h"
+﻿#include "MDAGameplayTags.h"
 
 namespace GameTags
 {
