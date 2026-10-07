@@ -26,7 +26,10 @@ namespace GameTags
 
 	
 	//Blocking
-	
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Blocked);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Blocked_Walking);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Blocked_Jumping);
+
 	
 	
 	

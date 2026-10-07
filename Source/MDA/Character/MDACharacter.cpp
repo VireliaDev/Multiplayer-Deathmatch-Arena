@@ -18,7 +18,7 @@ class UMDACharacterMovementComponent;
 
 AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(ObjectInitializer.SetDefaultSubobjectClass<UMDACharacterMovementComponent>(CharacterMovementComponentName))
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -32,18 +32,33 @@ AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(
 
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	ThirdPersonCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	GetMesh()->EnableExternalInterpolation(true);
 }
 
 void AMDACharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	InitAbilitySystemComponent();
+	
 }
 
 void AMDACharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilitySystemComponent();
+}
+
+void AMDACharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	if (GetNetMode() == NM_ListenServer && !IsLocallyControlled())
+	{
+		if (USkeletalMeshComponent* CharMesh = GetMesh())
+		{
+			CharMesh->bOnlyAllowAutonomousTickPose = HasAnyRootMotion();
+		}
+	}
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -124,10 +139,10 @@ void AMDACharacter::RequestSprintEnd()
 {
 }
 
+
 UAbilitySystemComponent* AMDACharacter::GetAbilitySystemComponent() const
 {
 	const AMDAPlayerState* PS = GetPlayerState<AMDAPlayerState>();
-	ensureMsgf(PS, TEXT("PlayerState is not of type AMDAPlayerState"));
 	return PS ? PS->GetAbilitySystemComponent() : nullptr;
 }
 
@@ -136,8 +151,4 @@ void AMDACharacter::InitAbilitySystemComponent()
 	AMDAPlayerState* PS = GetPlayerState<AMDAPlayerState>();
 	if (!PS) return;
 	PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
-
-	UMDACharacterMovementComponent* MovementComponent = Cast<UMDACharacterMovementComponent>(GetMovementComponent());
-	if (!MovementComponent) return;
-	MovementComponent->ResetMovementTags(PS->GetAbilitySystemComponent());
 }

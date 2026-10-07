@@ -24,6 +24,10 @@ namespace GameTags
 
 	
 	//Blocking
-	
+	UE_DEFINE_GAMEPLAY_TAG(Movement_Blocked,				  "Movement.Blocked");
+	UE_DEFINE_GAMEPLAY_TAG(Movement_Blocked_Walking,			  "Movement.Blocked.Walking");
+	UE_DEFINE_GAMEPLAY_TAG(Movement_Blocked_Jumping,			  "Movement.Blocked.Jumping");
+
+
 	
 }

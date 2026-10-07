@@ -16,6 +16,66 @@ void UMDACharacterMovementComponent::TickComponent(float DeltaTime, ELevelTick T
 	SyncMovementTags();
 }
 
+void UMDACharacterMovementComponent::TickCharacterPose(float DeltaTime)
+{
+	//If this character is remote and on the listen server,
+	//and has bOnlyAllowAutonomousTickPose set to false
+	//skip ticking the character pose to avoid laggy animation 
+	//(pose ticking is handled automatically now with bOnlyAllowAutonomousTickPose being false).
+	if (GetNetMode() == NM_ListenServer && !GetCharacterOwner()->IsLocallyControlled())
+	{
+		if (USkeletalMeshComponent* CharMesh = GetCharacterOwner()->GetMesh())
+		{
+			if (!CharMesh->bOnlyAllowAutonomousTickPose)
+			{
+				return;
+			}
+		}
+	}
+	
+	Super::TickCharacterPose(DeltaTime);
+}
+
+void UMDACharacterMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	MovementStateTags = UGameplayTagsManager::Get().RequestGameplayTagChildren(GameTags::Movement_State);
+}
+
+
+/**
+ * Compute the new locomotion tag,
+ * if it's the same as the last tag don't do anything.
+ * If it's different, reset all the currently applied movement tags from the ASC
+ * and then add the new one, and store is as the current tag locally 
+*/
+void UMDACharacterMovementComponent::SyncMovementTags()
+{
+	UAbilitySystemComponent* ASC = GetCharacterOwnerASC();
+	if (!ASC) return;
+	
+	//Compute the new tag, and check if it's the same as the last one
+	const FGameplayTag NewTag = ComputeLocomotionTag();
+	if (NewTag == CurrentLocomotionTag) return;
+	
+	
+	//Reset all the currently applied tags
+	for (const FGameplayTag& Tag : MovementStateTags)
+	{
+		if (Tag.IsValid())
+		{
+			ASC->SetLooseGameplayTagCount(Tag, 0, EGameplayTagReplicationState::None);
+		}
+	}
+	
+	//Add the new the tag to the ASC
+	if (NewTag.IsValid())
+	{
+		ASC->SetLooseGameplayTagCount(NewTag, 1, EGameplayTagReplicationState::None);
+	}
+	
+	CurrentLocomotionTag = NewTag;
+}
 FGameplayTag UMDACharacterMovementComponent::ComputeLocomotionTag() const
 {
 	if (IsFalling())
@@ -36,53 +96,142 @@ FGameplayTag UMDACharacterMovementComponent::ComputeLocomotionTag() const
 	return FGameplayTag();
 }
 
-void UMDACharacterMovementComponent::SyncMovementTags()
+
+
+UAbilitySystemComponent* UMDACharacterMovementComponent::GetCharacterOwnerASC()
 {
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(CharacterOwner.Get());
-	if (!ASC) return;
-	
-	const FGameplayTag NewTag = ComputeLocomotionTag();
-	
-	if (NewTag == CurrentLocomotionTag) return;
-	
-	if (CurrentLocomotionTag.IsValid())
+	if (CharacterOwnerASC.IsValid())
 	{
-		ASC->SetLooseGameplayTagCount(CurrentLocomotionTag, 0, EGameplayTagReplicationState::None);
+		return CharacterOwnerASC.Get();
 	}
-	
-	if (NewTag.IsValid())
-	{
-		ASC->SetLooseGameplayTagCount(NewTag, 1, EGameplayTagReplicationState::None);
-	}
-	
-	CurrentLocomotionTag = NewTag;
+	CharacterOwnerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(CharacterOwner.Get());
+	return CharacterOwnerASC.Get();
 }
 
-void UMDACharacterMovementComponent::ResetMovementTags(UAbilitySystemComponent* ASC)
+void UMDACharacterMovementComponent::RefreshMovementBlockedFlags()
 {
-	if (!ASC) return;
-	
-	CurrentLocomotionTag = FGameplayTag();
-	
-	const FGameplayTagContainer StateTags = UGameplayTagsManager::Get().RequestGameplayTagChildren(GameTags::Movement_State);
-	for (const FGameplayTag& Tag : StateTags)
+	UAbilitySystemComponent* ASC = GetCharacterOwnerASC();
+	if (!ASC)
 	{
-		ASC->SetLooseGameplayTagCount(Tag, 0, EGameplayTagReplicationState::None);
+		bIsWalkingBlocked = false;
+		bIsJumpingBlocked = false;
+		return;
+	}
+	
+	bIsWalkingBlocked = ASC->HasMatchingGameplayTag(GameTags::Movement_Blocked_Walking);
+	bIsJumpingBlocked = ASC->HasMatchingGameplayTag(GameTags::Movement_Blocked_Jumping);
+}
+
+bool UMDACharacterMovementComponent::ForcePositionUpdate(float DeltaTime)
+{
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		RefreshMovementBlockedFlags();
+	}
+	return Super::ForcePositionUpdate(DeltaTime);
+}
+
+void UMDACharacterMovementComponent::ControlledCharacterMove(const FVector& InputVector, float DeltaSeconds)
+{
+	RefreshMovementBlockedFlags();
+	Super::ControlledCharacterMove(InputVector, DeltaSeconds);
+}
+
+void UMDACharacterMovementComponent::MoveAutonomous(float ClientTimeStamp, float DeltaTime, uint8 CompressedFlags,
+	const FVector& NewAccel)
+{
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		RefreshMovementBlockedFlags();
+	}
+	Super::MoveAutonomous(ClientTimeStamp, DeltaTime, CompressedFlags, NewAccel);
+}
+
+FNetworkPredictionData_Client* UMDACharacterMovementComponent::GetPredictionData_Client() const
+{
+	if (!ClientPredictionData)
+	{
+		UMDACharacterMovementComponent* MutableThis = const_cast<UMDACharacterMovementComponent*>(this);
+		MutableThis->ClientPredictionData = new FMDANetworkPredictionData_Client(*this);
+	}
+	return ClientPredictionData;
+}
+
+void UMDACharacterMovementComponent::FMDASavedMove::Clear()
+{
+	Super::Clear();
+	bSavedWalkingBlocked = false;
+	bSavedJumpingBlocked = false;
+}
+
+void UMDACharacterMovementComponent::FMDASavedMove::SetMoveFor(ACharacter* C, float InDeltaTime,
+	FVector const& NewAccel, FNetworkPredictionData_Client_Character& ClientData)
+{
+	Super::SetMoveFor(C, InDeltaTime, NewAccel, ClientData);
+	
+	if (const UMDACharacterMovementComponent* CMC = Cast<UMDACharacterMovementComponent>(C->GetCharacterMovement()))
+	{
+		bSavedWalkingBlocked = CMC->bIsWalkingBlocked;
+		bSavedJumpingBlocked = CMC->bIsJumpingBlocked;
 	}
 }
+
+void UMDACharacterMovementComponent::FMDASavedMove::PrepMoveFor(ACharacter* C)
+{
+	Super::PrepMoveFor(C);
+
+	if (UMDACharacterMovementComponent* CMC = Cast<UMDACharacterMovementComponent>(C->GetCharacterMovement()))
+	{
+		CMC->bIsWalkingBlocked = bSavedWalkingBlocked;
+		CMC->bIsJumpingBlocked = bSavedJumpingBlocked;
+	}
+}
+
+bool UMDACharacterMovementComponent::FMDASavedMove::CanCombineWith(const FSavedMovePtr& NewMove,
+	ACharacter* InCharacter, float MaxDelta) const
+{
+	const FMDASavedMove* NewMDAMove = static_cast<const FMDASavedMove*>(NewMove.Get());
+	if (bSavedWalkingBlocked != NewMDAMove->bSavedWalkingBlocked)
+	{
+		return false;
+	}
+	if (bSavedJumpingBlocked != NewMDAMove->bSavedJumpingBlocked)
+	{
+		return false;
+	}
+	return Super::CanCombineWith(NewMove, InCharacter, MaxDelta);
+}
+
+UMDACharacterMovementComponent::FMDANetworkPredictionData_Client::FMDANetworkPredictionData_Client(
+	const UCharacterMovementComponent& ClientMovement) : Super (ClientMovement)
+{
+}
+
+FSavedMovePtr UMDACharacterMovementComponent::FMDANetworkPredictionData_Client::AllocateNewMove()
+{
+	return MakeShared<FMDASavedMove>();
+}
+
 
 
 float UMDACharacterMovementComponent::GetMaxSpeed() const
 {
-	if (IsMovingOnGround() && IsWalkingBlocked())
+	if (IsMovingOnGround() && bIsWalkingBlocked)
 	{
 		return 0.f;
 	}
 	return Super::GetMaxSpeed();
 }
 
-bool UMDACharacterMovementComponent::IsWalkingBlocked() const
+bool UMDACharacterMovementComponent::CanAttemptJump() const
 {
-	return false;
+	return Super::CanAttemptJump() && !bIsJumpingBlocked;
 }
+
+
+
+
+
+
+
 

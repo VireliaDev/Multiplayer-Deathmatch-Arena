@@ -24,6 +24,9 @@ public:
 	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+	
+	
+	virtual void Tick(float DeltaSeconds) override;
 
 	//Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly , Category="Camera", meta = (AllowPrivateAccess = "true"))
@@ -49,7 +52,7 @@ protected:
 	void RequestCrouchEnd();
 	void RequestSprint();
 	void RequestSprintEnd();
-	
+
 	
 public:
 	//Ability System Component
