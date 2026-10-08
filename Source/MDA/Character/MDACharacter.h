@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "MDACharacter.generated.h"
 
+class UMDACharacterMovementComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UMDAInputConfig;
@@ -21,12 +22,14 @@ class MDA_API AMDACharacter : public ACharacter, public IAbilitySystemInterface
 
 public:
 	AMDACharacter(const FObjectInitializer& ObjectInitializer);	
-	
+	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	
 	
 	virtual void Tick(float DeltaSeconds) override;
+	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	//Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly , Category="Camera", meta = (AllowPrivateAccess = "true"))
@@ -44,6 +47,9 @@ public:
 
 protected:
 	//Movement
+	UPROPERTY(Transient, DuplicateTransient)
+	TObjectPtr<UMDACharacterMovementComponent> MDAMovementComponent;
+	
 	void Input_Move(const FInputActionValue& Value);
 	void Input_Look(const FInputActionValue& Value);
 	void RequestJump();
@@ -52,7 +58,17 @@ protected:
 	void RequestCrouchEnd();
 	void RequestSprint();
 	void RequestSprintEnd();
-
+	
+	
+	//Sprinting
+public:
+	bool IsSprinting() const;
+	void SetIsSprinting(bool bNewSprinting);
+protected:
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	uint8 bIsSprinting:1;
+	
+	
 	
 public:
 	//Ability System Component

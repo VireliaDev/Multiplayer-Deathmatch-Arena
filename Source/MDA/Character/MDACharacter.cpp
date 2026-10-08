@@ -12,9 +12,7 @@
 #include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
 #include "MDA/Framework/Player/MDAPlayerState.h"
 #include "MDA/Input/MDAEnhancedInputComponent.h"
-
-
-class UMDACharacterMovementComponent;
+#include "Net/UnrealNetwork.h"
 
 AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(ObjectInitializer.SetDefaultSubobjectClass<UMDACharacterMovementComponent>(CharacterMovementComponentName))
 {
@@ -24,7 +22,7 @@ AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 	
-	
+	MDAMovementComponent = GetCharacterMovement<UMDACharacterMovementComponent>();
 	
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -33,6 +31,11 @@ AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	ThirdPersonCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	GetMesh()->EnableExternalInterpolation(true);
+}
+
+void AMDACharacter::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 void AMDACharacter::PossessedBy(AController* NewController)
@@ -59,6 +62,12 @@ void AMDACharacter::Tick(float DeltaSeconds)
 			CharMesh->bOnlyAllowAutonomousTickPose = HasAnyRootMotion();
 		}
 	}
+}
+
+void AMDACharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(ThisClass, bIsSprinting, COND_SimulatedOnly);
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -92,6 +101,13 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		ETriggerEvent::Started, this, &AMDACharacter::RequestJump);
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Jump,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestJumpEnd);
+	
+	// Sprinting
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestSprint);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestSprintEnd);
+	
 	
 }
 
@@ -133,12 +149,29 @@ void AMDACharacter::RequestCrouchEnd()
 
 void AMDACharacter::RequestSprint()
 {
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->bWantsToSprint = true;
+	}
 }
 
 void AMDACharacter::RequestSprintEnd()
 {
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->bWantsToSprint = false;
+	}
 }
 
+bool AMDACharacter::IsSprinting() const
+{
+	return bIsSprinting;
+}
+
+void AMDACharacter::SetIsSprinting(const bool bNewSprinting)
+{
+	bIsSprinting = bNewSprinting;
+}
 
 UAbilitySystemComponent* AMDACharacter::GetAbilitySystemComponent() const
 {
