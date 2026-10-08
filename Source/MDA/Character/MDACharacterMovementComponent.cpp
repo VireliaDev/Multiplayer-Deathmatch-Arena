@@ -20,7 +20,7 @@ void UMDACharacterMovementComponent::TickCharacterPose(float DeltaTime)
 {
 	//If this character is remote and on the listen server,
 	//and has bOnlyAllowAutonomousTickPose set to false
-	//skip ticking the character pose to avoid laggy animation 
+	//skip ticking the character pose to prevent double ticking
 	//(pose ticking is handled automatically now with bOnlyAllowAutonomousTickPose being false).
 	if (GetNetMode() == NM_ListenServer && !GetCharacterOwner()->IsLocallyControlled())
 	{
@@ -326,6 +326,15 @@ bool UMDACharacterMovementComponent::CanAttemptJump() const
 
 bool UMDACharacterMovementComponent::CanSprintInCurrentState() const
 {
+	if (!UpdatedComponent)
+	{
+		return false;
+	}
+	if (!UpdatedComponent->IsSimulatingPhysics())
+	{
+		return false;
+	}
+	
 	//Check for any actual movement
 	const bool bIsMoving = Velocity.SizeSquared2D() > FMath::Square(MinWalkSpeedThreshold);
 	
@@ -333,7 +342,7 @@ bool UMDACharacterMovementComponent::CanSprintInCurrentState() const
 	const float ForwardDot = FVector::DotProduct(Acceleration.GetSafeNormal2D(), UpdatedComponent->GetForwardVector());
 	const bool bIsMovingForward = ForwardDot >= SprintForwardDotThreshold;
 	
-	return IsMovingOnGround() && bIsMoving && bIsMovingForward && !IsCrouching() && !bIsSprintingBlocked && UpdatedComponent && !UpdatedComponent->IsSimulatingPhysics();
+	return IsMovingOnGround() && bIsMoving && bIsMovingForward && !IsCrouching() && !bIsSprintingBlocked;
 }
 
 bool UMDACharacterMovementComponent::IsSprinting() const
