@@ -23,12 +23,14 @@ namespace GameTags
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Idle);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Walking);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Falling);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Sprinting);
 
 	
 	//Blocking
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Blocked);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Blocked_Walking);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Blocked_Jumping);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_Blocked_Sprinting);
 
 	
 	
