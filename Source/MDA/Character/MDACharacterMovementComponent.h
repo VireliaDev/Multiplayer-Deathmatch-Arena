@@ -26,10 +26,11 @@ public:
 	////Input -> Intent////
 	void SetSprintHeld(bool bHeld);
 	void SetCrouchHeld(bool bHeld);
+	void SetAimHeld(bool bHeld);
 	
-	////Movement State////
+	////Finalised State////
 	bool IsSprinting() const { return bIsSprinting; }
-	
+	bool IsAiming() const { return bIsAiming; }
 	
 	////Intent byte////
 	uint8 PackIntents() const;
@@ -40,12 +41,12 @@ public:
 	virtual float GetMaxSpeed() const override;
 	virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
 	virtual FNetworkPredictionData_Client* GetPredictionData_Client() const override;
+	//Jump from crouch fix
+	virtual bool CanAttemptJump() const override;
 protected:
 	virtual void MoveAutonomous(float ClientTimeStamp, float DeltaTime, uint8 CompressedFlags, const FVector& NewAccel) override;
 	virtual bool ClientUpdatePositionAfterServerUpdate() override;
 	
-	//Jump from crouch fix
-	virtual bool CanAttemptJump() const override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "MDA|Sprint", meta = (ClampMin = "1"))
 	float SprintSpeedMultiplier = 1.3f;
@@ -53,6 +54,9 @@ protected:
 	// 0.5 = within 60 degrees of forward
 	UPROPERTY(EditDefaultsOnly, Category = "MDA|Sprint", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float SprintForwardThreshold = 0.5f;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim")
+	float AimSpeedMultiplier = 0.75f;
 	
 	
 private:

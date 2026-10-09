@@ -74,6 +74,12 @@ protected:
 	void RequestSprint();
 	void RequestSprintEnd();
 
+	//Aiming
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") float DefaultFOV = 90.f;
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") float AimFOV = 70.f;
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") float FOVInterpSpeed = 12.f;
+	void RequestAimIn();
+	void RequestAimOut();
 	
 	
 	

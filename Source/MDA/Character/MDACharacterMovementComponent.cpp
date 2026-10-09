@@ -50,6 +50,15 @@ void UMDACharacterMovementComponent::SetCrouchHeld(const bool bHeld)
 	}
 }
 
+void UMDACharacterMovementComponent::SetAimHeld(const bool bHeld)
+{
+	bAimHeld = bHeld;
+	if (bHeld)
+	{
+		bSprintAfterAim = false;
+	}
+}
+
 uint8 UMDACharacterMovementComponent::PackIntents() const
 {
 	uint8 Packed = 0;
@@ -76,11 +85,9 @@ void UMDACharacterMovementComponent::UnpackIntents(uint8 Packed)
 
 float UMDACharacterMovementComponent::GetMaxSpeed() const
 {
-	float Speed = Super::GetMaxSpeed();
-	if (bIsSprinting)
-	{
-		Speed *= SprintSpeedMultiplier;
-	}
+	float Speed = Super::GetMaxSpeed();     //Base already handles crouched speed
+	if (bIsSprinting)    { Speed *= SprintSpeedMultiplier; }
+	else if (bIsAiming)  { Speed *= AimSpeedMultiplier; }
 	return Speed;
 }
 
@@ -93,17 +100,19 @@ void UMDACharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 	{
 		if (IsFalling())
 		{
-			bSprintWins = bIsSprinting && !bWeaponSuppress;
-			bWantsToCrouch = false;  // no crouching in the air
+			bSprintWins = bIsSprinting && !bWeaponSuppress && (!bAimHeld || bSprintAfterAim);
+			bWantsToCrouch = false;
+			bIsAiming = bAimHeld && !bSprintWins;
 		}
 		else
 		{
-			bSprintWins = bSprintHeld && IsForwardInput() && !bWeaponSuppress && (!bCrouchHeld || bSprintAfterCrouch);   // last pressed wins
+			bSprintWins = bSprintHeld && IsForwardInput() && !bWeaponSuppress && (!bCrouchHeld || bSprintAfterCrouch) && (!bAimHeld || bSprintAfterAim);
 			bWantsToCrouch = bCrouchHeld && !bSprintWins;
+			bIsAiming = bAimHeld && !bSprintWins;
 		}
 	}
 
-	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);   // base does the crouch in here
+	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
 
 	if (!bSimulatedProxy)
 	{

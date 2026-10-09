@@ -55,6 +55,7 @@ void AMDACharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	
+	//Handle listen server animation problems
 	if (GetNetMode() == NM_ListenServer && !IsLocallyControlled())
 	{
 		if (USkeletalMeshComponent* CharMesh = GetMesh())
@@ -62,6 +63,14 @@ void AMDACharacter::Tick(float DeltaSeconds)
 			CharMesh->bOnlyAllowAutonomousTickPose = HasAnyRootMotion();
 		}
 	}
+	
+	//Handle Aiming FOV control
+	if (IsLocallyControlled() && ThirdPersonCamera)
+	{
+		const float Target = MDAMovementComponent->IsAiming() ? AimFOV : DefaultFOV;
+		ThirdPersonCamera->SetFieldOfView(FMath::FInterpTo(ThirdPersonCamera->FieldOfView, Target, DeltaSeconds, FOVInterpSpeed));
+	}
+	
 }
 
 void AMDACharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -114,7 +123,11 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestSprintEnd);
 	
-	
+	// Aiming
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Aim,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestAimIn);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Aim,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestAimOut);
 }
 
 void AMDACharacter::Input_Move(const FInputActionValue& Value)
@@ -180,6 +193,22 @@ void AMDACharacter::RequestSprintEnd()
 	if (MDAMovementComponent)
 	{
 		MDAMovementComponent->SetSprintHeld(false);
+	}
+}
+
+void AMDACharacter::RequestAimIn()
+{
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetAimHeld(true);
+	}
+}
+
+void AMDACharacter::RequestAimOut()
+{
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetAimHeld(false);
 	}
 }
 
