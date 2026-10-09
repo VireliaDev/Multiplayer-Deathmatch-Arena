@@ -10,6 +10,8 @@ UMDACharacterMovementComponent::UMDACharacterMovementComponent()
 	
 	bOrientRotationToMovement = false;
 	bUseControllerDesiredRotation = false;
+	
+	NavAgentProps.bCanCrouch = true;
 }
 
 void UMDACharacterMovementComponent::TickCharacterPose(float DeltaTime)
@@ -28,13 +30,23 @@ void UMDACharacterMovementComponent::TickCharacterPose(float DeltaTime)
 	Super::TickCharacterPose(DeltaTime);
 }
 
-void UMDACharacterMovementComponent::SetSprintHeld(bool bHeld)
+void UMDACharacterMovementComponent::SetSprintHeld(const bool bHeld)
 {
 	bSprintHeld = bHeld;
 	if (bHeld)
 	{
-		bSprintAfterCrouch = true;
+		//Sprint is now the latest input
+		bSprintAfterCrouch = true; 
 		bSprintAfterAim = true;
+	}
+}
+
+void UMDACharacterMovementComponent::SetCrouchHeld(const bool bHeld)
+{
+	bCrouchHeld = bHeld;
+	if (bHeld)
+	{
+		bSprintAfterCrouch = false;   //Crouch is now the latest input
 	}
 }
 
@@ -81,19 +93,21 @@ void UMDACharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 	{
 		if (IsFalling())
 		{
-			bSprintWins = bIsSprinting && !bWeaponSuppress;   // airborne: keep takeoff state
+			bSprintWins = bIsSprinting && !bWeaponSuppress;
+			bWantsToCrouch = false;  // no crouching in the air
 		}
 		else
 		{
-			bSprintWins = bSprintHeld && IsForwardInput() && !bWeaponSuppress;
+			bSprintWins = bSprintHeld && IsForwardInput() && !bWeaponSuppress && (!bCrouchHeld || bSprintAfterCrouch);   // last pressed wins
+			bWantsToCrouch = bCrouchHeld && !bSprintWins;
 		}
 	}
 
-	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
+	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);   // base does the crouch in here
 
 	if (!bSimulatedProxy)
 	{
-		bIsSprinting = bSprintWins;
+		bIsSprinting = bSprintWins && !IsCrouching();
 	}
 }
 
@@ -122,6 +136,12 @@ bool UMDACharacterMovementComponent::ClientUpdatePositionAfterServerUpdate()
 	const bool bResult = Super::ClientUpdatePositionAfterServerUpdate();
 	UnpackIntents(LiveIntents);
 	return bResult;
+}
+
+bool UMDACharacterMovementComponent::CanAttemptJump() const
+{
+	//Remove bWantsToCrouch check to allow jumping from crouched
+	return IsJumpAllowed() && (IsMovingOnGround() || IsFalling());
 }
 
 bool UMDACharacterMovementComponent::IsForwardInput() const

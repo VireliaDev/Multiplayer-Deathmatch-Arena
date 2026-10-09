@@ -64,10 +64,11 @@ protected:
 	//Jumping
 	void RequestJump();
 	void RequestJumpEnd();
+	virtual bool CanJumpInternal_Implementation() const override;
 	
 	//Crouching
 	void RequestCrouch();
-	void RequestCrouchEnd();
+	void RequestCrouchEnd() ;
 	
 	//Sprinting
 	void RequestSprint();

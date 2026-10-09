@@ -145,14 +145,26 @@ void AMDACharacter::RequestJumpEnd()
 	StopJumping();
 }
 
+bool AMDACharacter::CanJumpInternal_Implementation() const
+{
+	//Skip !IsCrouched check to allow jumping from crouched
+	return JumpIsAllowedInternal();
+}
+
 void AMDACharacter::RequestCrouch()
 {
-	Crouch();
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetCrouchHeld(true);
+	}
 }
 
 void AMDACharacter::RequestCrouchEnd()
 {
-	UnCrouch();
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetCrouchHeld(false);
+	}
 }
 
 void AMDACharacter::RequestSprint()

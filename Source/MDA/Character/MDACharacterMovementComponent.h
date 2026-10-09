@@ -21,10 +21,11 @@ protected:
 	////ListenServer Animation Fix////
 	virtual void TickCharacterPose(float DeltaTime) override;
 	
+
 public:
 	////Input -> Intent////
 	void SetSprintHeld(bool bHeld);
-	
+	void SetCrouchHeld(bool bHeld);
 	
 	////Movement State////
 	bool IsSprinting() const { return bIsSprinting; }
@@ -42,6 +43,9 @@ public:
 protected:
 	virtual void MoveAutonomous(float ClientTimeStamp, float DeltaTime, uint8 CompressedFlags, const FVector& NewAccel) override;
 	virtual bool ClientUpdatePositionAfterServerUpdate() override;
+	
+	//Jump from crouch fix
+	virtual bool CanAttemptJump() const override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "MDA|Sprint", meta = (ClampMin = "1"))
 	float SprintSpeedMultiplier = 1.3f;
