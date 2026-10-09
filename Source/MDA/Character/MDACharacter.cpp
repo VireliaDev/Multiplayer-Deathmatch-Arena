@@ -67,7 +67,7 @@ void AMDACharacter::Tick(float DeltaSeconds)
 void AMDACharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(ThisClass, bIsSprinting, COND_SimulatedOnly);
+	//DOREPLIFETIME_CONDITION(ThisClass, bIsSprinting, COND_SimulatedOnly);
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -107,6 +107,12 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		ETriggerEvent::Started, this, &AMDACharacter::RequestCrouch);
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Crouch,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestCrouchEnd);
+	
+	// Sprinting
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestSprint);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestSprintEnd);
 	
 	
 }
@@ -153,7 +159,7 @@ void AMDACharacter::RequestSprint()
 {
 	if (MDAMovementComponent)
 	{
-		
+		MDAMovementComponent->SetSprintHeld(true);
 	}
 }
 
@@ -161,18 +167,8 @@ void AMDACharacter::RequestSprintEnd()
 {
 	if (MDAMovementComponent)
 	{
-		
+		MDAMovementComponent->SetSprintHeld(false);
 	}
-}
-
-bool AMDACharacter::IsSprinting() const
-{
-	return bIsSprinting;
-}
-
-void AMDACharacter::SetIsSprinting(const bool bNewSprinting)
-{
-	bIsSprinting = bNewSprinting;
 }
 
 UAbilitySystemComponent* AMDACharacter::GetAbilitySystemComponent() const

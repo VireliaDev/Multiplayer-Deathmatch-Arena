@@ -45,27 +45,34 @@ public:
 	TObjectPtr<UMDAInputConfig> InputConfig;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-protected:
+	
 	//Movement
+public:
+	UFUNCTION(BlueprintPure, Category = "MDA|Movement")
+	UMDACharacterMovementComponent* GetMDAMovement() const { return MDAMovementComponent; }
+protected:
 	UPROPERTY(Transient, DuplicateTransient)
 	TObjectPtr<UMDACharacterMovementComponent> MDAMovementComponent;
 	
+	
+	//Generic Movement
 	void Input_Move(const FInputActionValue& Value);
+	
+	//Looking
 	void Input_Look(const FInputActionValue& Value);
+	
+	//Jumping
 	void RequestJump();
 	void RequestJumpEnd();
+	
+	//Crouching
 	void RequestCrouch();
 	void RequestCrouchEnd();
-	void RequestSprint();
-	void RequestSprintEnd();
 	
 	//Sprinting
-public:
-	bool IsSprinting() const;
-	void SetIsSprinting(bool bNewSprinting);
-protected:
-	UPROPERTY(BlueprintReadOnly, Replicated)
-	uint8 bIsSprinting:1;
+	void RequestSprint();
+	void RequestSprintEnd();
+
 	
 	
 	

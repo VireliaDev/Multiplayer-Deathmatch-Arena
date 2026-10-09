@@ -20,9 +20,10 @@ namespace GameTags
 	//////Movement//////
 	//State
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State);
-	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Idle);
-	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Walking);
-	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Falling);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Sprinting);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Crouching);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Aiming);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Mantling);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_SprintRecovery);
 	
 }

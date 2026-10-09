@@ -16,9 +16,10 @@ namespace GameTags
 	//////Movement//////
 	//State
 	UE_DEFINE_GAMEPLAY_TAG(Movement_State,				  "Movement.State");
-	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Idle,				  "Movement.State.Idle");
-	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Walking,				  "Movement.State.Walking");
-	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Falling,				  "Movement.State.Falling");
-	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Sprinting,				  "Movement.State.Sprinting");
+	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Sprinting,      "Movement.State.Sprinting");
+	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Crouching,      "Movement.State.Crouching");
+	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Aiming,         "Movement.State.Aiming");
+	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Mantling,       "Movement.State.Mantling");
+	UE_DEFINE_GAMEPLAY_TAG(Movement_State_SprintRecovery, "Movement.State.SprintRecovery");
 	
 }
