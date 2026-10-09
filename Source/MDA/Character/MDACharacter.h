@@ -59,7 +59,6 @@ protected:
 	void RequestSprint();
 	void RequestSprintEnd();
 	
-	
 	//Sprinting
 public:
 	bool IsSprinting() const;

@@ -9,8 +9,8 @@ namespace GameTags
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Crouch,				  "InputTag.Crouch");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Sprint,				  "InputTag.Sprint");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Aim,				  "InputTag.Aim");
-	UE_DEFINE_GAMEPLAY_TAG(InputTag_Reload,				  "InputTag.Reload");
-	UE_DEFINE_GAMEPLAY_TAG(InputTag_Shoot,				  "InputTag.Shoot");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Ability_Reload,				  "InputTag.Ability.Reload");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Ability_Shoot,				  "InputTag.Ability.Shoot");
 
 	
 	//////Movement//////
@@ -20,14 +20,5 @@ namespace GameTags
 	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Walking,				  "Movement.State.Walking");
 	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Falling,				  "Movement.State.Falling");
 	UE_DEFINE_GAMEPLAY_TAG(Movement_State_Sprinting,				  "Movement.State.Sprinting");
-
-	
-	//Blocking
-	UE_DEFINE_GAMEPLAY_TAG(Movement_Blocked,				  "Movement.Blocked");
-	UE_DEFINE_GAMEPLAY_TAG(Movement_Blocked_Walking,			  "Movement.Blocked.Walking");
-	UE_DEFINE_GAMEPLAY_TAG(Movement_Blocked_Jumping,			  "Movement.Blocked.Jumping");
-	UE_DEFINE_GAMEPLAY_TAG(Movement_Blocked_Sprinting,			  "Movement.Blocked.Sprinting");
-
-
 	
 }

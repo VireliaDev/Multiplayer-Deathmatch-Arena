@@ -102,11 +102,11 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Jump,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestJumpEnd);
 	
-	// Sprinting
-	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
-		ETriggerEvent::Started, this, &AMDACharacter::RequestSprint);
-	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
-		ETriggerEvent::Completed, this, &AMDACharacter::RequestSprintEnd);
+	// Crouching
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Crouch,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestCrouch);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Crouch,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestCrouchEnd);
 	
 	
 }
@@ -141,17 +141,19 @@ void AMDACharacter::RequestJumpEnd()
 
 void AMDACharacter::RequestCrouch()
 {
+	Crouch();
 }
 
 void AMDACharacter::RequestCrouchEnd()
 {
+	UnCrouch();
 }
 
 void AMDACharacter::RequestSprint()
 {
 	if (MDAMovementComponent)
 	{
-		MDAMovementComponent->bWantsToSprint = true;
+		
 	}
 }
 
@@ -159,7 +161,7 @@ void AMDACharacter::RequestSprintEnd()
 {
 	if (MDAMovementComponent)
 	{
-		MDAMovementComponent->bWantsToSprint = false;
+		
 	}
 }
 
