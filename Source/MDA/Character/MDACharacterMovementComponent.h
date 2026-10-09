@@ -8,6 +8,7 @@
 #include "MDACharacterMovementComponent.generated.h"
 
 
+class UAbilitySystemComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MDA_API UMDACharacterMovementComponent : public UCharacterMovementComponent
@@ -20,6 +21,10 @@ public:
 protected:
 	////ListenServer Animation Fix////
 	virtual void TickCharacterPose(float DeltaTime) override;
+	
+	////Ability System State Updating With Tags////
+	UAbilitySystemComponent* GetASC() const;
+	void UpdateStateTags();
 	
 
 public:

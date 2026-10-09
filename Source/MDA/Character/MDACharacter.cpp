@@ -76,7 +76,8 @@ void AMDACharacter::Tick(float DeltaSeconds)
 void AMDACharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	//DOREPLIFETIME_CONDITION(ThisClass, bIsSprinting, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsSprinting, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsAiming,    COND_SimulatedOnly);
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -128,6 +129,22 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		ETriggerEvent::Started, this, &AMDACharacter::RequestAimIn);
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Aim,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestAimOut);
+}
+
+void AMDACharacter::SetReplicatedMovementState(const bool bSprinting, const bool bAiming)
+{
+	bRepIsSprinting = bSprinting;
+	bRepIsAiming = bAiming;
+}
+
+bool AMDACharacter::IsSprintingCosmetic() const
+{
+	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsSprinting : MDAMovementComponent->IsSprinting();
+}
+
+bool AMDACharacter::IsAimingCosmetic() const
+{
+	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsAiming : MDAMovementComponent->IsAiming();
 }
 
 void AMDACharacter::Input_Move(const FInputActionValue& Value)

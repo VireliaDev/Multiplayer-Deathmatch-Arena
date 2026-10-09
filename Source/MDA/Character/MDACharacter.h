@@ -47,7 +47,6 @@ public:
 
 	
 	//Movement
-public:
 	UFUNCTION(BlueprintPure, Category = "MDA|Movement")
 	UMDACharacterMovementComponent* GetMDAMovement() const { return MDAMovementComponent; }
 protected:
@@ -55,6 +54,21 @@ protected:
 	TObjectPtr<UMDACharacterMovementComponent> MDAMovementComponent;
 	
 	
+	//Replicated Movement state information
+public:
+	void SetReplicatedMovementState(bool bSprinting, bool bAiming);
+	UFUNCTION(BlueprintPure, Category = "MDA|Movement") 
+	bool IsSprintingCosmetic() const;
+	UFUNCTION(BlueprintPure, Category = "MDA|Movement") 
+	bool IsAimingCosmetic() const;
+private:
+	UPROPERTY(Replicated) 
+	bool bRepIsSprinting = false;
+	UPROPERTY(Replicated) 
+	bool bRepIsAiming = false;
+	
+	
+protected:
 	//Generic Movement
 	void Input_Move(const FInputActionValue& Value);
 	
@@ -75,9 +89,12 @@ protected:
 	void RequestSprintEnd();
 
 	//Aiming
-	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") float DefaultFOV = 90.f;
-	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") float AimFOV = 70.f;
-	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") float FOVInterpSpeed = 12.f;
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") 
+	float DefaultFOV = 90.f;
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") 
+	float AimFOV = 70.f;
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim") 
+	float FOVInterpSpeed = 12.f;
 	void RequestAimIn();
 	void RequestAimOut();
 	

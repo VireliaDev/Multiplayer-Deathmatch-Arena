@@ -3,6 +3,11 @@
 
 #include "MDACharacterMovementComponent.h"
 
+#include "AbilitySystemComponent.h"
+#include "MDACharacter.h"
+#include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
+#include "MDA/Framework/Player/MDAPlayerState.h"
+
 
 UMDACharacterMovementComponent::UMDACharacterMovementComponent()
 {  
@@ -28,6 +33,32 @@ void UMDACharacterMovementComponent::TickCharacterPose(float DeltaTime)
 	}
     
 	Super::TickCharacterPose(DeltaTime);
+}
+
+UAbilitySystemComponent* UMDACharacterMovementComponent::GetASC() const
+{
+	const AMDAPlayerState* PS = CharacterOwner ? CharacterOwner->GetPlayerState<AMDAPlayerState>() : nullptr;
+	return PS ? PS->GetAbilitySystemComponent() : nullptr;
+}
+
+void UMDACharacterMovementComponent::UpdateStateTags()
+{
+	if (CharacterOwner->bClientUpdating)
+	{
+		return;   // Do not update state tags during resimulation
+	}
+
+	if (UAbilitySystemComponent* ASC = GetASC())
+	{
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Sprinting, bIsSprinting ? 1 : 0);
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Crouching, IsCrouching() ? 1 : 0);
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Aiming,    bIsAiming ? 1 : 0);
+	}
+
+	if (CharacterOwner->HasAuthority())
+	{
+		CastChecked<AMDACharacter>(CharacterOwner)->SetReplicatedMovementState(bIsSprinting, bIsAiming);
+	}
 }
 
 void UMDACharacterMovementComponent::SetSprintHeld(const bool bHeld)
@@ -117,6 +148,7 @@ void UMDACharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 	if (!bSimulatedProxy)
 	{
 		bIsSprinting = bSprintWins && !IsCrouching();
+		UpdateStateTags();
 	}
 }
 
@@ -144,6 +176,7 @@ bool UMDACharacterMovementComponent::ClientUpdatePositionAfterServerUpdate()
 	const uint8 LiveIntents = PackIntents();
 	const bool bResult = Super::ClientUpdatePositionAfterServerUpdate();
 	UnpackIntents(LiveIntents);
+	UpdateStateTags();
 	return bResult;
 }
 
