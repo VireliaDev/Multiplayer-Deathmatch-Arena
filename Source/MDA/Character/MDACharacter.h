@@ -61,11 +61,15 @@ public:
 	bool IsSprintingCosmetic() const;
 	UFUNCTION(BlueprintPure, Category = "MDA|Movement") 
 	bool IsAimingCosmetic() const;
+	UFUNCTION(BlueprintPure, Category = "MDA|Movement")
+	bool IsMantlingCosmetic() const;
 private:
 	UPROPERTY(Replicated) 
 	bool bRepIsSprinting = false;
 	UPROPERTY(Replicated) 
 	bool bRepIsAiming = false;
+	UPROPERTY(Replicated)
+	bool bRepIsMantling = false;
 	
 	
 protected:

@@ -26,6 +26,12 @@ protected:
 	UAbilitySystemComponent* GetASC() const;
 	void UpdateStateTags();
 	
+	////Anim Information////
+	UFUNCTION(BlueprintPure, Category = "MDA|Movement") 
+	float GetMaxWalkSpeed() const;
+	UFUNCTION(BlueprintPure, Category = "MDA|Movement") 
+	float GetMaxSprintSpeed() const;
+	
 
 public:
 	////Input -> Intent////
@@ -36,6 +42,7 @@ public:
 	////Finalised State////
 	bool IsSprinting() const { return bIsSprinting; }
 	bool IsAiming() const { return bIsAiming; }
+	bool IsMantling() const { return bIsMantling; }
 	
 	////Intent byte////
 	uint8 PackIntents() const;
@@ -83,6 +90,7 @@ private:
 	////Internal Movement States////
 	bool bIsSprinting = false;
 	bool bIsAiming = false;
+	bool bIsMantling = false;
 	
 	
 	

@@ -61,6 +61,16 @@ void UMDACharacterMovementComponent::UpdateStateTags()
 	}
 }
 
+float UMDACharacterMovementComponent::GetMaxWalkSpeed() const
+{
+	return MaxWalkSpeed;
+}
+
+float UMDACharacterMovementComponent::GetMaxSprintSpeed() const
+{
+	return MaxWalkSpeed * SprintSpeedMultiplier;
+}
+
 void UMDACharacterMovementComponent::SetSprintHeld(const bool bHeld)
 {
 	bSprintHeld = bHeld;

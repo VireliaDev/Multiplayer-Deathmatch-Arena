@@ -147,6 +147,11 @@ bool AMDACharacter::IsAimingCosmetic() const
 	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsAiming : MDAMovementComponent->IsAiming();
 }
 
+bool AMDACharacter::IsMantlingCosmetic() const
+{
+	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsSprinting : MDAMovementComponent->IsMantling();
+}
+
 void AMDACharacter::Input_Move(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
