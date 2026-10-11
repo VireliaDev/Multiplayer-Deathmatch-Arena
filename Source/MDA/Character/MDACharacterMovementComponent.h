@@ -53,6 +53,8 @@ public:
 	void SetSprintHeld(bool bHeld);
 	void SetCrouchHeld(bool bHeld);
 	void SetAimHeld(bool bHeld);
+	void SetWantsToFire(bool bWants);
+	void SetIsReloading(bool bBusy);
 	
 	////Finalised State////
 	bool IsSprinting() const { return bIsSprinting; }
@@ -75,14 +77,14 @@ protected:
 	virtual bool ClientUpdatePositionAfterServerUpdate() override;
 	
 	
-	UPROPERTY(EditDefaultsOnly, Category = "MDA|Sprint", meta = (ClampMin = "1"))
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Sprint", meta = (ClampMin = "1"))
 	float SprintSpeedMultiplier = 1.3f;
 
 	// 0.5 = within 60 degrees of forward
-	UPROPERTY(EditDefaultsOnly, Category = "MDA|Sprint", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Sprint", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float SprintForwardThreshold = 0.5f;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "MDA|Aim")
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Aim")
 	float AimSpeedMultiplier = 0.75f;
 	
 	
@@ -96,11 +98,11 @@ private:
 	bool bJumpHeld = false;
 	bool bSprintAfterCrouch = false;
 	bool bSprintAfterAim = false;
-	bool bWeaponSuppress = false;
+	bool bIsWeaponBusy = false;
 
 	//// Local-only intent to control bWeaponSuppress ////
 	bool bWantsToFire = false;
-	bool bWeaponBusy = false;
+	bool bIsReloading = false;
 
 	////Internal Movement States////
 	bool bIsSprinting = false;

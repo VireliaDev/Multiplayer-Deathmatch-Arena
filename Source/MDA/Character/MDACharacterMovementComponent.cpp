@@ -121,28 +121,40 @@ void UMDACharacterMovementComponent::SetAimHeld(const bool bHeld)
 	}
 }
 
+void UMDACharacterMovementComponent::SetWantsToFire(bool bWants)
+{
+	bWantsToFire = bWants;
+	bIsWeaponBusy = bWantsToFire || bIsReloading;
+}
+
+void UMDACharacterMovementComponent::SetIsReloading(bool bBusy)
+{
+	bIsReloading = bBusy;
+	bIsWeaponBusy = bWantsToFire || bIsReloading;
+}
+
 uint8 UMDACharacterMovementComponent::PackIntents() const
 {
 	uint8 Packed = 0;
-	if (bSprintHeld)        { Packed |= EMDAIntent::SprintHeld; }
-	if (bCrouchHeld)        { Packed |= EMDAIntent::CrouchHeld; }
-	if (bAimHeld)           { Packed |= EMDAIntent::AimHeld; }
-	if (bJumpHeld)          { Packed |= EMDAIntent::JumpHeld; }
-	if (bSprintAfterCrouch) { Packed |= EMDAIntent::SprintAfterCrouch; }
-	if (bSprintAfterAim)    { Packed |= EMDAIntent::SprintAfterAim; }
-	if (bWeaponSuppress)    { Packed |= EMDAIntent::WeaponSuppress; }
+	if (bSprintHeld)        { Packed |= SprintHeld; }
+	if (bCrouchHeld)        { Packed |= CrouchHeld; }
+	if (bAimHeld)           { Packed |= AimHeld; }
+	if (bJumpHeld)          { Packed |= JumpHeld; }
+	if (bSprintAfterCrouch) { Packed |= SprintAfterCrouch; }
+	if (bSprintAfterAim)    { Packed |= SprintAfterAim; }
+	if (bIsWeaponBusy)      { Packed |= WeaponSuppress; }
 	return Packed;
 }
 
 void UMDACharacterMovementComponent::UnpackIntents(uint8 Packed)
 {
-	bSprintHeld        = (Packed & EMDAIntent::SprintHeld) != 0;
-	bCrouchHeld        = (Packed & EMDAIntent::CrouchHeld) != 0;
-	bAimHeld           = (Packed & EMDAIntent::AimHeld) != 0;
-	bJumpHeld          = (Packed & EMDAIntent::JumpHeld) != 0;
-	bSprintAfterCrouch = (Packed & EMDAIntent::SprintAfterCrouch) != 0;
-	bSprintAfterAim    = (Packed & EMDAIntent::SprintAfterAim) != 0;
-	bWeaponSuppress    = (Packed & EMDAIntent::WeaponSuppress) != 0;
+	bSprintHeld        = (Packed & SprintHeld) != 0;
+	bCrouchHeld        = (Packed & CrouchHeld) != 0;
+	bAimHeld           = (Packed & AimHeld) != 0;
+	bJumpHeld          = (Packed & JumpHeld) != 0;
+	bSprintAfterCrouch = (Packed & SprintAfterCrouch) != 0;
+	bSprintAfterAim    = (Packed & SprintAfterAim) != 0;
+	bIsWeaponBusy    =   (Packed & WeaponSuppress) != 0;
 }
 
 float UMDACharacterMovementComponent::GetMaxSpeed() const
@@ -162,13 +174,13 @@ void UMDACharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 	{
 		if (IsFalling())
 		{
-			bSprintWins = bIsSprinting && !bWeaponSuppress && (!bAimHeld || bSprintAfterAim);
+			bSprintWins = bIsSprinting && !bIsWeaponBusy && (!bAimHeld || bSprintAfterAim);
 			bWantsToCrouch = false;
 			bIsAiming = bAimHeld && !bSprintWins;
 		}
 		else
 		{
-			bSprintWins = bSprintHeld && IsForwardInput() && !bWeaponSuppress && (!bCrouchHeld || bSprintAfterCrouch) && (!bAimHeld || bSprintAfterAim);
+			bSprintWins = bSprintHeld && IsForwardInput() && !bIsWeaponBusy && (!bCrouchHeld || bSprintAfterCrouch) && (!bAimHeld || bSprintAfterAim);
 			bWantsToCrouch = bCrouchHeld && !bSprintWins;
 			bIsAiming = bAimHeld && !bSprintWins;
 		}
