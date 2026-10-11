@@ -19,6 +19,27 @@ UMDACharacterMovementComponent::UMDACharacterMovementComponent()
 	NavAgentProps.bCanCrouch = true;
 }
 
+void UMDACharacterMovementComponent::SetReplicatedAcceleration(const FVector& InAcceleration)
+{
+	bHasReplicatedAcceleration = true;
+	Acceleration = InAcceleration;
+}
+
+void UMDACharacterMovementComponent::SimulateMovement(float DeltaTime)
+{
+	if (bHasReplicatedAcceleration)
+	{
+		//prevent sim proxies from destroying the acceleration in simulation
+		const FVector SavedAcceleration = Acceleration;
+		Super::SimulateMovement(DeltaTime);
+		Acceleration = SavedAcceleration;
+	}
+	else
+	{
+		Super::SimulateMovement(DeltaTime);
+	}
+}
+
 void UMDACharacterMovementComponent::TickCharacterPose(float DeltaTime)
 {
 	if (GetNetMode() == NM_ListenServer && !GetCharacterOwner()->IsLocallyControlled())

@@ -51,6 +51,16 @@ void AMDACharacter::OnRep_PlayerState()
 	InitAbilitySystemComponent();
 }
 
+void AMDACharacter::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
+{
+	Super::PreReplication(ChangedPropertyTracker);
+
+	if (const UCharacterMovementComponent* CMC = GetCharacterMovement())
+	{
+		ReplicatedAcceleration = CMC->GetCurrentAcceleration();
+	}
+}
+
 void AMDACharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -78,6 +88,8 @@ void AMDACharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsSprinting, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsAiming,    COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, ReplicatedAcceleration,    COND_SimulatedOnly);
+
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -150,6 +162,14 @@ bool AMDACharacter::IsAimingCosmetic() const
 bool AMDACharacter::IsMantlingCosmetic() const
 {
 	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsSprinting : MDAMovementComponent->IsMantling();
+}
+
+void AMDACharacter::OnRep_ReplicatedAcceleration()
+{
+	if (UMDACharacterMovementComponent* MDAMove = GetMDAMovement())
+	{
+		MDAMove->SetReplicatedAcceleration(ReplicatedAcceleration);
+	}
 }
 
 void AMDACharacter::Input_Move(const FInputActionValue& Value)

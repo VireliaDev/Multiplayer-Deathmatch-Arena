@@ -18,6 +18,21 @@ class MDA_API UMDACharacterMovementComponent : public UCharacterMovementComponen
 public:
 	UMDACharacterMovementComponent();
 	
+	
+	////Replicated Acceleration for Remote client animations////
+	bool bHasReplicatedAcceleration = false;
+	void SetReplicatedAcceleration(const FVector& InAcceleration);
+protected:
+	virtual void SimulateMovement(float DeltaTime) override;
+
+	
+	
+	
+	
+	
+	
+	
+	
 protected:
 	////ListenServer Animation Fix////
 	virtual void TickCharacterPose(float DeltaTime) override;

@@ -25,7 +25,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-	
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
 	
 	virtual void Tick(float DeltaSeconds) override;
 	
@@ -37,7 +37,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> ThirdPersonCamera;
-	
 	
 	
 	//Input
@@ -63,6 +62,9 @@ public:
 	bool IsAimingCosmetic() const;
 	UFUNCTION(BlueprintPure, Category = "MDA|Movement")
 	bool IsMantlingCosmetic() const;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedAcceleration)
+	FVector_NetQuantize10 ReplicatedAcceleration;
 private:
 	UPROPERTY(Replicated) 
 	bool bRepIsSprinting = false;
@@ -70,6 +72,12 @@ private:
 	bool bRepIsAiming = false;
 	UPROPERTY(Replicated)
 	bool bRepIsMantling = false;
+	
+	
+
+	UFUNCTION()
+	void OnRep_ReplicatedAcceleration();
+	
 	
 	
 protected:
