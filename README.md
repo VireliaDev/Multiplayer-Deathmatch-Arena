@@ -1,14 +1,14 @@
 # Multiplayer Deathmatch Arena
 
-A fast-paced third-person deathmatch arena shooter for 2–8 players, built solo in Unreal Engine 5 with C++ and the Gameplay Ability System (GAS).
+A fast-paced third-person deathmatch arena shooter for 2–6 players, built in Unreal Engine 5 with C++ and the Gameplay Ability System (GAS).
 
-**Status:** Pre-production (design and planning)
+**Status:** Production:  Early Implementation
 
 [Design doc](https://docs.google.com/document/d/1DuCkFCHjMxGcoANQjauKPUlrU714bcXGE3BWMM9Bz00) | [Project page and devlogs](https://vireliadev.github.io/projects/mda/)
 
 ## About
 
-Two to eight players spawn into an arena in a free-for-all. The first to 25 kills wins, or whoever has the most kills when time runs out. Weapons are hitscan with bloom-based accuracy, health doesn't regenerate but shields do, and players pick their loadout between lives.
+Two to six players spawn into an arena in a free-for-all. The first to 25 kills wins, or whoever has the most kills when time runs out. Weapons are hitscan with bloom-based accuracy, health doesn't regenerate but shields do, and players pick their loadout between lives.
 
 ## What this project demonstrates
 
@@ -34,7 +34,7 @@ Progress is tracked in the design doc and written up in the devlogs.
 
 
 
-**Note:** third-party art (Paragon and Fab assets) is not included in this repo, as their licences don't allow redistribution. The project builds may fail to work properly without these assets.
+**Note:** third-party FAB assets are not included in this repo, as their licences don't allow redistribution. The project builds may fail to work properly without these assets.
 
 ## Licence
 
