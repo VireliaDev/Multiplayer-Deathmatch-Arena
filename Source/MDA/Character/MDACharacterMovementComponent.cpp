@@ -19,6 +19,20 @@ UMDACharacterMovementComponent::UMDACharacterMovementComponent()
 	NavAgentProps.bCanCrouch = true;
 }
 
+void UMDACharacterMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (SprintRecoveryEndTime > 0.f && GetWorld()->GetTimeSeconds() >= SprintRecoveryEndTime)
+	{
+		SprintRecoveryEndTime = 0.f;
+		if (UAbilitySystemComponent* ASC = GetASC())
+		{
+			ASC->SetLooseGameplayTagCount(GameTags::Movement_State_SprintRecovery, 0);
+		}
+	}
+}
+
 void UMDACharacterMovementComponent::SetReplicatedAcceleration(const FVector& InAcceleration)
 {
 	bHasReplicatedAcceleration = true;
@@ -71,9 +85,9 @@ void UMDACharacterMovementComponent::UpdateStateTags()
 
 	if (UAbilitySystemComponent* ASC = GetASC())
 	{
-		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Sprinting, bIsSprinting ? 1 : 0);
-		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Crouching, IsCrouching() ? 1 : 0);
-		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Aiming,    bIsAiming ? 1 : 0);
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Sprinting, bIsSprinting ? 1 : 0, EGameplayTagReplicationState::None);
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Crouching, IsCrouching() ? 1 : 0, EGameplayTagReplicationState::None);
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Aiming, bIsAiming ? 1 : 0, EGameplayTagReplicationState::None);
 	}
 
 	if (CharacterOwner->HasAuthority())
@@ -169,6 +183,7 @@ void UMDACharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 {
 	const bool bSimulatedProxy = CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy;
 	bool bSprintWins = false;
+	const bool bWasSprinting = bIsSprinting;
 
 	if (!bSimulatedProxy)
 	{
@@ -188,9 +203,15 @@ void UMDACharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 
 	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
 
-	if (!bSimulatedProxy)
+	if (!bSimulatedProxy)//If client or server only 
 	{
 		bIsSprinting = bSprintWins && !IsCrouching();
+		
+		if (bWasSprinting && !bIsSprinting)
+		{
+			OnSprintEnded();
+		}
+		
 		UpdateStateTags();
 	}
 }
@@ -238,4 +259,20 @@ bool UMDACharacterMovementComponent::IsForwardInput() const
 	const FVector InputDir = Acceleration.GetSafeNormal2D();
 	const FVector Facing = UpdatedComponent->GetForwardVector().GetSafeNormal2D();
 	return FVector::DotProduct(InputDir, Facing) > SprintForwardThreshold;
+}
+
+void UMDACharacterMovementComponent::OnSprintEnded()
+{
+	if (CharacterOwner->bClientUpdating)
+	{
+		return;   //Skip this during resimulation
+	}
+
+	const float Duration = CharacterOwner->IsLocallyControlled() ? ClientSprintRecoveryTime : ServerSprintRecoveryTime;
+	SprintRecoveryEndTime = GetWorld()->GetTimeSeconds() + Duration;
+
+	if (UAbilitySystemComponent* ASC = GetASC())
+	{
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_SprintRecovery, 1);
+	}
 }

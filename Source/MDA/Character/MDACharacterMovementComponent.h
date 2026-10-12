@@ -18,6 +18,7 @@ class MDA_API UMDACharacterMovementComponent : public UCharacterMovementComponen
 public:
 	UMDACharacterMovementComponent();
 	
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	////Replicated Acceleration for Remote client animations////
 	bool bHasReplicatedAcceleration = false;
@@ -26,14 +27,6 @@ protected:
 	virtual void SimulateMovement(float DeltaTime) override;
 
 	
-	
-	
-	
-	
-	
-	
-	
-protected:
 	////ListenServer Animation Fix////
 	virtual void TickCharacterPose(float DeltaTime) override;
 	
@@ -108,6 +101,19 @@ private:
 	bool bIsSprinting = false;
 	bool bIsAiming = false;
 	bool bIsMantling = false;
+	
+	////Sprint Recovery////
+protected:
+	//
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Weapons")
+	float ClientSprintRecoveryTime = 0.25f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Weapons")
+	float ServerSprintRecoveryTime = 0.21f;     // slightly shorter to account for network jitter
+
+private:
+	void OnSprintEnded();
+	float SprintRecoveryEndTime = 0.f;
 	
 	
 	
