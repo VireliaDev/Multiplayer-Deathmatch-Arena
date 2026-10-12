@@ -1,6 +1,6 @@
 # Multiplayer Deathmatch Arena
 
-A fast-paced third-person deathmatch arena shooter for 2–8 players, built in Unreal Engine 5 with C++ and the Gameplay Ability System (GAS).
+A fast-paced third-person deathmatch arena shooter for 2–6 players, built in Unreal Engine 5 with C++ and the Gameplay Ability System (GAS).
 
 **Status:** Production:  Early Implementation
 
