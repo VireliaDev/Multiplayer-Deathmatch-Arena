@@ -331,19 +331,7 @@ void UMDACharacterMovementComponent::TryStartMantle()
 	{
 		return;
 	}
-
-	DrawDebugCapsule(
-		GetWorld(),
-		Target,
-		CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight(),
-		CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius(),
-		CharacterOwner->GetActorRotation().Quaternion(),
-		FColor::Red,
-		false,
-		3,
-		0,
-		1
-		);
+	
 
 	const FVector Start = UpdatedComponent->GetComponentLocation();
 
@@ -386,7 +374,6 @@ bool UMDACharacterMovementComponent::FindMantleTarget(FVector& OutTarget) const
 	{
 		return false;
 	}
-	DrawDebugLine(GetWorld(), WallHit.TraceStart, WallHit.TraceEnd, FColor::Red, false, 3, 0, 1);
 
 	// 2: Find if there is a reachable ledge on the detected wall
 	const FVector Inward = WallHit.ImpactPoint - WallHit.ImpactNormal.GetSafeNormal2D() * (Radius + MantleLedgeExtraDistance);
