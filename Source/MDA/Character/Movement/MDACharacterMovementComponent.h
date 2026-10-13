@@ -48,11 +48,12 @@ public:
 	void SetAimHeld(bool bHeld);
 	void SetWantsToFire(bool bWants);
 	void SetIsReloading(bool bBusy);
+	void SetJumpHeld(bool bHeld);
 	
 	////Finalised State////
 	bool IsSprinting() const { return bIsSprinting; }
 	bool IsAiming() const { return bIsAiming; }
-	bool IsMantling() const { return bIsMantling; }
+	bool IsMantling() const;
 	
 	////Intent byte////
 	uint8 PackIntents() const;
@@ -81,6 +82,22 @@ protected:
 	float AimSpeedMultiplier = 0.75f;
 	
 	
+	
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Mantle")
+	float MinLedgeHeight = 60.f; // below this = don't do mantle
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Mantle")
+	float MaxLedgeHeight = 200.f; // measured from feet
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Mantle")
+	float MantleReachDistance = 60.f;
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Mantle")
+	float MantleDuration = 0.35f;
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Mantle", meta = (ClampMin = "1.0"))
+	float MantleRiseExponent = 3.f; // higher = more height gained early, clears the lip sooner
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Mantle", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float MantleExitSpeedFraction = 0.5f; // share of glide speed kept as a push at the end (0 = dead stop)
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Movement|Mantle")
+	float MantleLedgeExtraDistance = 10.f; // how much extra distance to move past the ledge
+	
 private:
 	bool IsForwardInput() const;
 	
@@ -100,11 +117,9 @@ private:
 	////Internal Movement States////
 	bool bIsSprinting = false;
 	bool bIsAiming = false;
-	bool bIsMantling = false;
 	
-	////Sprint Recovery////
 protected:
-	//
+	////Sprint Recovery////
 	UPROPERTY(EditDefaultsOnly, Category = "MDA|Weapons")
 	float ClientSprintRecoveryTime = 0.25f;
 
@@ -115,6 +130,11 @@ private:
 	void OnSprintEnded();
 	float SprintRecoveryEndTime = 0.f;
 	
+	
+	////Mantling////
+	const FName MDAMantleSourceName = (TEXT("MDAMantle"));
+	void TryStartMantle();
+	bool FindMantleTarget(FVector& OutTarget) const;
 	
 	
 	// Intents byte that travels in every move.

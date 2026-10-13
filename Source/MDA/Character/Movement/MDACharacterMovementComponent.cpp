@@ -4,9 +4,12 @@
 #include "MDACharacterMovementComponent.h"
 
 #include "AbilitySystemComponent.h"
-#include "MDACharacter.h"
+#include "../MDACharacter.h"
+#include "Abilities/Tasks/AbilityTask_ApplyRootMotion_Base.h"
+#include "Components/CapsuleComponent.h"
 #include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
 #include "MDA/Framework/Player/MDAPlayerState.h"
+#include "RootMotion/RootMotionSource_MDAMantle.h"
 
 
 UMDACharacterMovementComponent::UMDACharacterMovementComponent()
@@ -88,11 +91,12 @@ void UMDACharacterMovementComponent::UpdateStateTags()
 		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Sprinting, bIsSprinting ? 1 : 0, EGameplayTagReplicationState::None);
 		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Crouching, IsCrouching() ? 1 : 0, EGameplayTagReplicationState::None);
 		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Aiming, bIsAiming ? 1 : 0, EGameplayTagReplicationState::None);
+		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_Mantling, IsMantling() ? 1 : 0, EGameplayTagReplicationState::None);
 	}
 
 	if (CharacterOwner->HasAuthority())
 	{
-		CastChecked<AMDACharacter>(CharacterOwner)->SetReplicatedMovementState(bIsSprinting, bIsAiming);
+		CastChecked<AMDACharacter>(CharacterOwner)->SetReplicatedMovementState(bIsSprinting, bIsAiming, IsMantling());
 	}
 }
 
@@ -147,6 +151,23 @@ void UMDACharacterMovementComponent::SetIsReloading(bool bBusy)
 	bIsWeaponBusy = bWantsToFire || bIsReloading;
 }
 
+void UMDACharacterMovementComponent::SetJumpHeld(bool bHeld)
+{
+	bJumpHeld = bHeld;
+}
+
+bool UMDACharacterMovementComponent::IsMantling() const
+{
+	for (const TSharedPtr<FRootMotionSource>& Source : CurrentRootMotion.RootMotionSources)
+	{
+		if (Source.IsValid() && Source->InstanceName == MDAMantleSourceName)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 uint8 UMDACharacterMovementComponent::PackIntents() const
 {
 	uint8 Packed = 0;
@@ -174,8 +195,21 @@ void UMDACharacterMovementComponent::UnpackIntents(uint8 Packed)
 float UMDACharacterMovementComponent::GetMaxSpeed() const
 {
 	float Speed = Super::GetMaxSpeed();     //Base already handles crouched speed
-	if (bIsSprinting)    { Speed *= SprintSpeedMultiplier; }
-	else if (bIsAiming)  { Speed *= AimSpeedMultiplier; }
+	
+	if (IsMantling()) //No modifiers allowed during a mantle
+	{
+		return Speed;
+	}
+	
+	if (bIsSprinting)
+	{
+		Speed *= SprintSpeedMultiplier;
+	}
+	else if (bIsAiming)
+	{
+		Speed *= AimSpeedMultiplier;
+	}
+	
 	return Speed;
 }
 
@@ -187,7 +221,15 @@ void UMDACharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 
 	if (!bSimulatedProxy)
 	{
-		if (IsFalling())
+		//Constantly check for mantling
+		TryStartMantle();
+		
+		if (IsMantling()) // Mantling overrides other movement
+		{
+			bWantsToCrouch = false;
+			
+		}
+		else if (IsFalling())
 		{
 			bSprintWins = bIsSprinting && !bIsWeaponBusy && (!bAimHeld || bSprintAfterAim);
 			bWantsToCrouch = false;
@@ -275,4 +317,95 @@ void UMDACharacterMovementComponent::OnSprintEnded()
 	{
 		ASC->SetLooseGameplayTagCount(GameTags::Movement_State_SprintRecovery, 1);
 	}
+}
+
+void UMDACharacterMovementComponent::TryStartMantle()
+{
+	if (IsMantling() || !IsFalling() || !bJumpHeld || !IsForwardInput())
+	{
+		return;
+	}
+
+	FVector Target;
+	if (!FindMantleTarget(Target))
+	{
+		return;
+	}
+
+	DrawDebugCapsule(
+		GetWorld(),
+		Target,
+		CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight(),
+		CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius(),
+		CharacterOwner->GetActorRotation().Quaternion(),
+		FColor::Red,
+		false,
+		3,
+		0,
+		1
+		);
+
+	const FVector Start = UpdatedComponent->GetComponentLocation();
+
+	TSharedPtr<FRootMotionSource_MDAMantle> Move = MakeShared<FRootMotionSource_MDAMantle>();
+	Move->InstanceName = MDAMantleSourceName;
+	Move->AccumulateMode = ERootMotionAccumulateMode::Override;
+	Move->Duration = MantleDuration;
+	Move->StartLocation = Start;
+	Move->TargetLocation = Target;
+	Move->Forward = (Target - Start).GetSafeNormal2D();
+	Move->RiseExponent = MantleRiseExponent;
+
+	// Keep entry momentum, but never too slow to reach the ledge in time
+	const float EntrySpeed = FVector::DotProduct(Velocity, Move->Forward);
+	const float NeededSpeed = FVector::Dist2D(Start, Target) / MantleDuration;
+	Move->GlideSpeed = FMath::Max(EntrySpeed, NeededSpeed);
+
+	// Exit with a small forward push instead of a dead stop
+	Move->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
+	Move->FinishVelocityParams.SetVelocity = Move->Forward * Move->GlideSpeed * MantleExitSpeedFraction;
+
+	ApplyRootMotionSource(Move);
+}
+
+bool UMDACharacterMovementComponent::FindMantleTarget(FVector& OutTarget) const
+{
+	const UCapsuleComponent* Capsule = CharacterOwner->GetCapsuleComponent();
+	const float Radius = Capsule->GetScaledCapsuleRadius();
+	const float StandHalfHeight = CharacterOwner->GetDefaultHalfHeight();
+	const FVector Feet = UpdatedComponent->GetComponentLocation() - FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight());
+	const FVector Forward = UpdatedComponent->GetForwardVector().GetSafeNormal2D();
+	const ECollisionChannel Channel = UpdatedComponent->GetCollisionObjectType();
+	const FCollisionQueryParams Params(SCENE_QUERY_STAT(MDAMantle), false, CharacterOwner);
+
+	// 1: Check for a wall in front of the player
+	const FVector WallStart = Feet + FVector(0.f, 0.f, MinLedgeHeight);
+	const FVector WallEnd = WallStart + Forward * (Radius + MantleReachDistance);
+	FHitResult WallHit;
+	if (!GetWorld()->LineTraceSingleByChannel(WallHit, WallStart, WallEnd, Channel, Params))
+	{
+		return false;
+	}
+	DrawDebugLine(GetWorld(), WallHit.TraceStart, WallHit.TraceEnd, FColor::Red, false, 3, 0, 1);
+
+	// 2: Find if there is a reachable ledge on the detected wall
+	const FVector Inward = WallHit.ImpactPoint - WallHit.ImpactNormal.GetSafeNormal2D() * (Radius + MantleLedgeExtraDistance);
+	const FVector TopStart(Inward.X, Inward.Y, Feet.Z + MaxLedgeHeight);
+	const FVector TopEnd(Inward.X, Inward.Y, Feet.Z + MinLedgeHeight);
+	FHitResult TopHit;
+	if (!GetWorld()->LineTraceSingleByChannel(TopHit, TopStart, TopEnd, Channel, Params) || TopHit.bStartPenetrating || !IsWalkable(TopHit))
+	{
+		return false;
+	}
+
+	// 3: Final check to see if the player would actually fit on the ledge post mantle
+	const FVector Target = TopHit.ImpactPoint + FVector(0.f, 0.f, StandHalfHeight + 2.f);
+	if (GetWorld()->OverlapBlockingTestByChannel(Target, FQuat::Identity, Channel,
+			FCollisionShape::MakeCapsule(Radius, StandHalfHeight), Params))
+	{
+		return false;
+	}
+	
+	OutTarget = Target;
+	return true;
 }
