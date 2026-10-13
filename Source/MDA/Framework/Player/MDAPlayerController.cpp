@@ -4,6 +4,8 @@
 #include "MDAPlayerController.h"
 
 #include "EnhancedInputSubsystems.h"
+#include "MDAPlayerState.h"
+#include "MDA/AbilitySystem/MDAAbilitySystemComponent.h"
 
 void AMDAPlayerController::SetupInputComponent()
 {
@@ -21,4 +23,16 @@ void AMDAPlayerController::SetupInputComponent()
 			}
 		}
 	}
+}
+
+void AMDAPlayerController::PostProcessInput(const float DeltaTime, const bool bGamePaused)
+{
+	if (const AMDAPlayerState* PS = GetPlayerState<AMDAPlayerState>())
+	{
+		if (UMDAAbilitySystemComponent* ASC = Cast<UMDAAbilitySystemComponent>(PS->GetAbilitySystemComponent()))
+		{
+			ASC->ProcessAbilityInput(DeltaTime, bGamePaused);
+		}
+	}
+	Super::PostProcessInput(DeltaTime, bGamePaused);
 }

@@ -16,12 +16,17 @@ class MDA_API AMDAPlayerController : public APlayerController
 	GENERATED_BODY()
 	
 	
-	
+public:
 	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")
 	TArray<UInputMappingContext*> PlayerInputMappingContext;
 	
+	//Forwarding to ability system for ability activation
+	virtual void PostProcessInput(const float DeltaTime, const bool bGamePaused) override;
+	
 protected:
 	virtual void SetupInputComponent() override;
+	
+	
 	
 };

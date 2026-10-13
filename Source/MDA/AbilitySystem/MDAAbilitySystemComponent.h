@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/MDAAbilitySet.h"
 #include "MDAAbilitySystemComponent.generated.h"
 
 
@@ -15,13 +16,24 @@ class MDA_API UMDAAbilitySystemComponent : public UAbilitySystemComponent
 public:
 	// Sets default values for this component's properties
 	UMDAAbilitySystemComponent();
+	void GiveAbilitySet(const FMDAGameAbilitySet& AbilitySet, UObject* SourceObject,
+	                    FGameAbilitySetHandles& GrantedHandles);
+	void TakeAbilitySet(FGameAbilitySetHandles& GrantedHandles);
 
+
+	//Ability Activation and Input handling (LYRA BASED)
+	void AbilityInputTagPressed(FGameplayTag InputTag);
+	void AbilityInputTagReleased(FGameplayTag InputTag);
+
+	void ProcessAbilityInput(float DeltaTime, bool bGamePaused);
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	TArray<FGameplayAbilitySpecHandle>
+	InputPressedSpecHandles;
+	
+	TArray<FGameplayAbilitySpecHandle>
+	InputReleasedSpecHandles;
+	
+	TArray<FGameplayAbilitySpecHandle>
+	InputHeldSpecHandles;
+	
 };

@@ -22,7 +22,7 @@ public:
 		if (const UInputAction* InputAction = Config->FindNativeActionForTag(Tag))
 		{
 			BindAction(InputAction, Event, Object, Func);
-			UE_LOG(LogEnhancedInput, Log, TEXT("Binded Native Action: %s"), *InputAction->GetName());
+			UE_LOG(LogEnhancedInput, Log, TEXT("Bound Native Action: %s"), *InputAction->GetName());
 		}
 	}
 	

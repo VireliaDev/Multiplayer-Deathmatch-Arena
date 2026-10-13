@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+#include "MDA/AbilitySystem/Abilities/MDAAbilitySet.h"
 #include "MDACharacter.generated.h"
 
+struct FGameplayTag;
 class UMDACharacterMovementComponent;
 class USpringArmComponent;
 class UCameraComponent;
@@ -55,7 +57,7 @@ protected:
 	
 	//Replicated Movement state information
 public:
-	void SetReplicatedMovementState(bool bSprinting, bool bAiming);
+	void SetReplicatedMovementState(bool bSprinting, bool bAiming, bool bMantling);
 	UFUNCTION(BlueprintPure, Category = "MDA|Movement") 
 	bool IsSprintingCosmetic() const;
 	UFUNCTION(BlueprintPure, Category = "MDA|Movement") 
@@ -109,6 +111,24 @@ protected:
 	float FOVInterpSpeed = 12.f;
 	void RequestAimIn();
 	void RequestAimOut();
+	
+	//Shooting
+	void RequestShoot();
+	void RequestShootEnd();
+	
+	
+	//Abilities
+	UPROPERTY(EditDefaultsOnly, Category = "MDA|Abilities")
+	FMDAGameAbilitySet AbilitySet;
+	
+	UPROPERTY()
+	FGameAbilitySetHandles GrantedHandles;
+	
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "MDA|Abilities")
+	void GiveAbilities();
+	
+	void Input_AbilityPressed(FGameplayTag InputTag);
+	void Input_AbilityReleased(FGameplayTag InputTag);
 	
 	
 	

@@ -5,13 +5,14 @@
 
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
-#include "MDACharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerInput.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "MDA/AbilitySystem/MDAAbilitySystemComponent.h"
 #include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
 #include "MDA/Framework/Player/MDAPlayerState.h"
 #include "MDA/Input/MDAEnhancedInputComponent.h"
+#include "Movement/MDACharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(ObjectInitializer.SetDefaultSubobjectClass<UMDACharacterMovementComponent>(CharacterMovementComponentName))
@@ -43,6 +44,7 @@ void AMDACharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	InitAbilitySystemComponent();
 	
+	GiveAbilities();
 }
 
 void AMDACharacter::OnRep_PlayerState()
@@ -81,15 +83,25 @@ void AMDACharacter::Tick(float DeltaSeconds)
 		ThirdPersonCamera->SetFieldOfView(FMath::FInterpTo(ThirdPersonCamera->FieldOfView, Target, DeltaSeconds, FOVInterpSpeed));
 	}
 	
+	// //Mantle effects
+	// if (IsLocallyControlled() && MDAMovementComponent && MDAMovementComponent->IsMantling())
+	// {
+	// 	CameraBoom->bEnableCameraLag = true;
+	// }else
+	// {
+	// 	CameraBoom->bEnableCameraLag = false;
+	// }
+	
+	
 }
 
 void AMDACharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsSprinting, COND_SimulatedOnly);
-	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsAiming,    COND_SimulatedOnly);
-	DOREPLIFETIME_CONDITION(AMDACharacter, ReplicatedAcceleration,    COND_SimulatedOnly);
-
+	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsAiming, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsMantling, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, ReplicatedAcceleration, COND_SimulatedOnly);
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -141,12 +153,23 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		ETriggerEvent::Started, this, &AMDACharacter::RequestAimIn);
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Aim,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestAimOut);
+	
+	//Shooting
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Ability_Shoot,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestShoot);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Ability_Shoot,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestShootEnd);
+	
+	
+	//Abilities
+	EIC->BindAbilityActions(InputConfig, this, &ThisClass::Input_AbilityPressed, &ThisClass::Input_AbilityReleased);
 }
 
-void AMDACharacter::SetReplicatedMovementState(const bool bSprinting, const bool bAiming)
+void AMDACharacter::SetReplicatedMovementState(const bool bSprinting, const bool bAiming, const bool bMantling)
 {
 	bRepIsSprinting = bSprinting;
 	bRepIsAiming = bAiming;
+	bRepIsMantling = bMantling;
 }
 
 bool AMDACharacter::IsSprintingCosmetic() const
@@ -193,11 +216,19 @@ void AMDACharacter::Input_Look(const FInputActionValue& Value)
 void AMDACharacter::RequestJump()
 {
 	Jump();
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetJumpHeld(true);
+	}
 }
 
 void AMDACharacter::RequestJumpEnd()
 {
 	StopJumping();
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetJumpHeld(false);
+	}
 }
 
 bool AMDACharacter::CanJumpInternal_Implementation() const
@@ -251,6 +282,49 @@ void AMDACharacter::RequestAimOut()
 	if (MDAMovementComponent)
 	{
 		MDAMovementComponent->SetAimHeld(false);
+	}
+}
+
+void AMDACharacter::RequestShoot()
+{
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetWantsToFire(true);
+	}
+}
+
+void AMDACharacter::RequestShootEnd()
+{
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetWantsToFire(false);
+	}
+}
+
+void AMDACharacter::GiveAbilities()
+{
+	if (UMDAAbilitySystemComponent* ASC = Cast<UMDAAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		if (GrantedHandles.AbilityHandles.Num() == 0)
+		{
+			ASC->GiveAbilitySet(AbilitySet, this, GrantedHandles);
+		}
+	}
+}
+
+void AMDACharacter::Input_AbilityPressed(FGameplayTag InputTag)
+{
+	if (UMDAAbilitySystemComponent* ASC = Cast<UMDAAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		ASC->AbilityInputTagPressed(InputTag);
+	}
+}
+
+void AMDACharacter::Input_AbilityReleased(FGameplayTag InputTag)
+{
+	if (UMDAAbilitySystemComponent* ASC = Cast<UMDAAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		ASC->AbilityInputTagReleased(InputTag);
 	}
 }
 
