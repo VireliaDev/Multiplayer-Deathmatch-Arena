@@ -51,10 +51,21 @@ void AMDACharacter::OnRep_PlayerState()
 	InitAbilitySystemComponent();
 }
 
+void AMDACharacter::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
+{
+	Super::PreReplication(ChangedPropertyTracker);
+
+	if (const UCharacterMovementComponent* CMC = GetCharacterMovement())
+	{
+		ReplicatedAcceleration = CMC->GetCurrentAcceleration();
+	}
+}
+
 void AMDACharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	
+	//Handle listen server animation problems
 	if (GetNetMode() == NM_ListenServer && !IsLocallyControlled())
 	{
 		if (USkeletalMeshComponent* CharMesh = GetMesh())
@@ -62,12 +73,23 @@ void AMDACharacter::Tick(float DeltaSeconds)
 			CharMesh->bOnlyAllowAutonomousTickPose = HasAnyRootMotion();
 		}
 	}
+	
+	//Handle Aiming FOV control
+	if (IsLocallyControlled() && ThirdPersonCamera)
+	{
+		const float Target = MDAMovementComponent->IsAiming() ? AimFOV : DefaultFOV;
+		ThirdPersonCamera->SetFieldOfView(FMath::FInterpTo(ThirdPersonCamera->FieldOfView, Target, DeltaSeconds, FOVInterpSpeed));
+	}
+	
 }
 
 void AMDACharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(ThisClass, bIsSprinting, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsSprinting, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, bRepIsAiming,    COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(AMDACharacter, ReplicatedAcceleration,    COND_SimulatedOnly);
+
 }
 
 void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -102,13 +124,52 @@ void AMDACharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Jump,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestJumpEnd);
 	
+	// Crouching
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Crouch,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestCrouch);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Crouch,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestCrouchEnd);
+	
 	// Sprinting
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
 		ETriggerEvent::Started, this, &AMDACharacter::RequestSprint);
 	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Sprint,
 		ETriggerEvent::Completed, this, &AMDACharacter::RequestSprintEnd);
 	
-	
+	// Aiming
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Aim,
+		ETriggerEvent::Started, this, &AMDACharacter::RequestAimIn);
+	EIC->BindNativeAction(InputConfig, GameTags::InputTag_Aim,
+		ETriggerEvent::Completed, this, &AMDACharacter::RequestAimOut);
+}
+
+void AMDACharacter::SetReplicatedMovementState(const bool bSprinting, const bool bAiming)
+{
+	bRepIsSprinting = bSprinting;
+	bRepIsAiming = bAiming;
+}
+
+bool AMDACharacter::IsSprintingCosmetic() const
+{
+	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsSprinting : MDAMovementComponent->IsSprinting();
+}
+
+bool AMDACharacter::IsAimingCosmetic() const
+{
+	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsAiming : MDAMovementComponent->IsAiming();
+}
+
+bool AMDACharacter::IsMantlingCosmetic() const
+{
+	return GetLocalRole() == ROLE_SimulatedProxy ? bRepIsSprinting : MDAMovementComponent->IsMantling();
+}
+
+void AMDACharacter::OnRep_ReplicatedAcceleration()
+{
+	if (UMDACharacterMovementComponent* MDAMove = GetMDAMovement())
+	{
+		MDAMove->SetReplicatedAcceleration(ReplicatedAcceleration);
+	}
 }
 
 void AMDACharacter::Input_Move(const FInputActionValue& Value)
@@ -139,19 +200,33 @@ void AMDACharacter::RequestJumpEnd()
 	StopJumping();
 }
 
+bool AMDACharacter::CanJumpInternal_Implementation() const
+{
+	//Skip !IsCrouched check to allow jumping from crouched
+	return JumpIsAllowedInternal();
+}
+
 void AMDACharacter::RequestCrouch()
 {
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetCrouchHeld(true);
+	}
 }
 
 void AMDACharacter::RequestCrouchEnd()
 {
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetCrouchHeld(false);
+	}
 }
 
 void AMDACharacter::RequestSprint()
 {
 	if (MDAMovementComponent)
 	{
-		MDAMovementComponent->bWantsToSprint = true;
+		MDAMovementComponent->SetSprintHeld(true);
 	}
 }
 
@@ -159,18 +234,24 @@ void AMDACharacter::RequestSprintEnd()
 {
 	if (MDAMovementComponent)
 	{
-		MDAMovementComponent->bWantsToSprint = false;
+		MDAMovementComponent->SetSprintHeld(false);
 	}
 }
 
-bool AMDACharacter::IsSprinting() const
+void AMDACharacter::RequestAimIn()
 {
-	return bIsSprinting;
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetAimHeld(true);
+	}
 }
 
-void AMDACharacter::SetIsSprinting(const bool bNewSprinting)
+void AMDACharacter::RequestAimOut()
 {
-	bIsSprinting = bNewSprinting;
+	if (MDAMovementComponent)
+	{
+		MDAMovementComponent->SetAimHeld(false);
+	}
 }
 
 UAbilitySystemComponent* AMDACharacter::GetAbilitySystemComponent() const
