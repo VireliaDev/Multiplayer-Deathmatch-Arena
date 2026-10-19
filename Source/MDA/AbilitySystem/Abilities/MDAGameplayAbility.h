@@ -7,6 +7,7 @@
 #include "MDAGameplayAbility.generated.h"
 
 
+class AMDACharacter;
 class UMDACharacterMovementComponent;
 
 UENUM(BlueprintType)
@@ -37,4 +38,5 @@ public:
 	
 	//Helpers
 	static UMDACharacterMovementComponent* GetMDAMovementFromActorInfo(const FGameplayAbilityActorInfo* ActorInfo);
+	static AMDACharacter* GetMDACharacterFromActorInfo(const FGameplayAbilityActorInfo* ActorInfo);
 };

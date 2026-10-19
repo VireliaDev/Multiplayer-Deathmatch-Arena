@@ -6,6 +6,8 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayTag.h"
 #include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
+#include "MDA/Character/MDACharacter.h"
+#include "MDA/Framework/Player/MDAPlayerState.h"
 
 UMDAGameplayAbility_Shoot::UMDAGameplayAbility_Shoot()
 {
@@ -27,10 +29,19 @@ void UMDAGameplayAbility_Shoot::ActivateAbility(const FGameplayAbilitySpecHandle
 		return;
 	}
 
-	// Placeholder shot. The weapon system replaces this.
-	UE_LOG(LogTemp, Log, TEXT("[%s] Fire: shot"), ActorInfo->IsNetAuthority() ? TEXT("Server") : TEXT("Client"));
+	if (const AMDACharacter* Character = GetMDACharacterFromActorInfo(ActorInfo))
+	{
+		if (const AMDAPlayerState* PlayerState = Character->GetMDAPlayerState())
+		{
+			const UMDAWeaponAsset* CurrentWeapon = PlayerState->GetCurrentWeapon();
+			
+			// Placeholder shot
+			UE_LOG(LogTemp, Log, TEXT("[%s] Fire: shot from %s"), ActorInfo->IsNetAuthority() ? TEXT("Server") : TEXT("Client"), CurrentWeapon ? *UEnum::GetValueAsString(CurrentWeapon->WeaponSlot) : TEXT("NoWeapon"));
+		}
+	}
+	
 
-	// One shot per activation; holding fire re-activates it after the interval.
+	//One shot per activation; holding fire re-activates it after the interval.
 	UAbilityTask_WaitDelay* Wait = UAbilityTask_WaitDelay::WaitDelay(this, TestShotInterval);
 	Wait->OnFinish.AddDynamic(this, &ThisClass::OnShotIntervalFinished);
 	Wait->ReadyForActivation();

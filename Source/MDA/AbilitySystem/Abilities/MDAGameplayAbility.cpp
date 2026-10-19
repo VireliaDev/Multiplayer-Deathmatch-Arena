@@ -4,6 +4,7 @@
 #include "MDAGameplayAbility.h"
 
 #include "AbilitySystemComponent.h"
+#include "MDA/Character/MDACharacter.h"
 #include "MDA/Character/Movement/MDACharacterMovementComponent.h"
 
 UMDAGameplayAbility::UMDAGameplayAbility()
@@ -23,4 +24,9 @@ void UMDAGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo
 UMDACharacterMovementComponent* UMDAGameplayAbility::GetMDAMovementFromActorInfo(const FGameplayAbilityActorInfo* ActorInfo)
 {
 	return ActorInfo ? Cast<UMDACharacterMovementComponent>(ActorInfo->MovementComponent.Get()) : nullptr;
+}
+
+AMDACharacter* UMDAGameplayAbility::GetMDACharacterFromActorInfo(const FGameplayAbilityActorInfo* ActorInfo)
+{
+	return Cast<AMDACharacter>(ActorInfo->AvatarActor);
 }

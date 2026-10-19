@@ -340,3 +340,8 @@ void AMDACharacter::InitAbilitySystemComponent()
 	if (!PS) return;
 	PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
 }
+
+AMDAPlayerState* AMDACharacter::GetMDAPlayerState() const
+{
+	return GetPlayerState<AMDAPlayerState>();
+}

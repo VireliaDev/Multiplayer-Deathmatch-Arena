@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
-#include "MDAVitalsAttributeSet.generated.h"
+#include "MDAPlayerAttributeSet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MDA_API UMDAVitalsAttributeSet : public UAttributeSet
+class MDA_API UMDAPlayerAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 };

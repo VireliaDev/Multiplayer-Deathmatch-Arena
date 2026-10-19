@@ -8,6 +8,7 @@
 #include "MDA/AbilitySystem/Abilities/MDAAbilitySet.h"
 #include "MDACharacter.generated.h"
 
+class AMDAPlayerState;
 struct FGameplayTag;
 class UMDACharacterMovementComponent;
 class USpringArmComponent;
@@ -136,5 +137,8 @@ public:
 	//Ability System Component
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	void InitAbilitySystemComponent();
+	
+	//Player State
+	AMDAPlayerState* GetMDAPlayerState() const;
 	
 };
