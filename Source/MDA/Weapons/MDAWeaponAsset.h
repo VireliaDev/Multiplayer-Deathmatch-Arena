@@ -16,7 +16,7 @@ enum class EWeaponSlot : uint8 {
 
 
 
-UCLASS(Blueprintable, Const)
+UCLASS(Blueprintable)
 class MDA_API UMDAWeaponAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
@@ -24,19 +24,19 @@ class MDA_API UMDAWeaponAsset : public UPrimaryDataAsset
 public:
 	
 	////Cosmetic////
-	UPROPERTY(EditDefaultsOnly, Category = "Cosmetic")
-	FName WeaponName = NAME_None;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cosmetic")
+	FText WeaponName;
 	
 	
 	
 	
 	////Gameplay////
-	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")
 	EWeaponSlot WeaponSlot = EWeaponSlot::None;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")
 	float MagazineSize = 0;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")
 	float ReserveAmmoSize = 0;
 };

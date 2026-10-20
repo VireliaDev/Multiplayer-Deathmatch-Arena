@@ -6,6 +6,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "MDAPlayerState.h"
 #include "MDA/AbilitySystem/MDAAbilitySystemComponent.h"
+#include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
+#include "MDA/Input/MDAEnhancedInputComponent.h"
+#include "MDA/UI/MDAHUD.h"
 
 void AMDAPlayerController::SetupInputComponent()
 {
@@ -17,12 +20,42 @@ void AMDAPlayerController::SetupInputComponent()
 		// Add Input Mapping Contexts
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 		{
-			for (const UInputMappingContext* CurrentContext : PlayerInputMappingContext)
+			for (const UInputMappingContext* CurrentContext : PlayerInputMappingContexts)
 			{
 				Subsystem->AddMappingContext(CurrentContext, 0);
 			}
 		}
+		
+		
+		//Setup controller level input bindings (UI)
+		if (UMDAEnhancedInputComponent* EIC = Cast<UMDAEnhancedInputComponent>(InputComponent))
+		{
+			//WeaponMenu
+			EIC->BindNativeAction(InputConfig, GameTags::InputTag_UI_WeaponMenu,
+				ETriggerEvent::Started, this, &AMDAPlayerController::Input_ToggleWeaponMenu);
+			
+		}
 	}
+}
+
+void AMDAPlayerController::Input_ToggleWeaponMenu()
+{
+	if (AMDAHUD* HUD = GetHUD<AMDAHUD>())
+	{
+		if (!HUD->IsWeaponMenuOpen() && CanOpenWeaponMenu())
+		{
+			HUD->OpenWeaponMenu();
+		} 
+		else
+		{
+			HUD->CloseWeaponMenu();
+		}
+	}
+}
+
+bool AMDAPlayerController::CanOpenWeaponMenu()
+{
+	return true;
 }
 
 void AMDAPlayerController::PostProcessInput(const float DeltaTime, const bool bGamePaused)

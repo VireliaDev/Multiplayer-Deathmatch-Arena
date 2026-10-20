@@ -9,6 +9,11 @@
 #include "MDAPlayerState.generated.h"
 
 class UMDAAbilitySystemComponent;
+
+
+DECLARE_LOG_CATEGORY_EXTERN(LogPlayerState, Log, All);
+
+
 /**
  * 
  */
@@ -54,11 +59,15 @@ protected:
 	
 	
 public:
-	bool GiveNewWeapon(UMDAWeaponAsset* NewWeapon);
+	
+	UFUNCTION(Server, Reliable)
+	void RequestNewWeapon(UMDAWeaponAsset* RequestedWeapon);
 	
 	UMDAWeaponAsset* GetCurrentWeapon() const;
 	
 private:
+	bool GiveNewWeapon(UMDAWeaponAsset* NewWeapon);
+	
 	UFUNCTION()
 	void OnRep_CurrentWeapon();
 };

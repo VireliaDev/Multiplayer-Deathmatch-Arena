@@ -6,7 +6,8 @@
 #include "AbilitySystemComponent.h"
 #include "MDA/AbilitySystem/MDAAbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "ViewportInteractions/ViewportInteractionBindings.h"
+
+DEFINE_LOG_CATEGORY(LogPlayerState);
 
 AMDAPlayerState::AMDAPlayerState()
 {
@@ -47,6 +48,11 @@ UAbilitySystemComponent* AMDAPlayerState::GetAbilitySystemComponent() const
 
 void AMDAPlayerState::InitWeaponSystem()
 {
+	if (!HasAuthority() || !StartingWeapon)
+	{
+		return;
+	}
+	
 	switch (StartingWeapon->WeaponSlot)
 	{
 	case EWeaponSlot::Primary:
@@ -59,6 +65,36 @@ void AMDAPlayerState::InitWeaponSystem()
 		break;
 	}
 	CurrentSlot = StartingWeapon->WeaponSlot;
+}
+
+void AMDAPlayerState::RequestNewWeapon_Implementation(UMDAWeaponAsset* RequestedWeapon)
+{
+	if (RequestedWeapon)
+	{
+		if (RequestedWeapon != PrimaryWeapon && RequestedWeapon != SecondaryWeapon)
+		{
+			const bool Result = GiveNewWeapon(RequestedWeapon);
+		
+			if (!Result)
+			{
+				UE_LOG(LogPlayerState, Error, TEXT("Failed To give requested weapon."))
+			}
+		}
+	}
+}
+
+
+UMDAWeaponAsset* AMDAPlayerState::GetCurrentWeapon() const
+{
+	switch (CurrentSlot)
+	{
+	case EWeaponSlot::Primary:
+		return PrimaryWeapon;
+	case EWeaponSlot::Secondary:
+		return  SecondaryWeapon;
+	default:
+		return nullptr;
+	}
 }
 
 bool AMDAPlayerState::GiveNewWeapon(UMDAWeaponAsset* NewWeapon)
@@ -80,20 +116,6 @@ bool AMDAPlayerState::GiveNewWeapon(UMDAWeaponAsset* NewWeapon)
 	}
 	return false;
 }
-
-UMDAWeaponAsset* AMDAPlayerState::GetCurrentWeapon() const
-{
-	switch (CurrentSlot)
-	{
-	case EWeaponSlot::Primary:
-		return PrimaryWeapon;
-	case EWeaponSlot::Secondary:
-		return  SecondaryWeapon;
-	default:
-		return nullptr;
-	}
-}
-
 
 void AMDAPlayerState::OnRep_CurrentWeapon()
 {

@@ -9,8 +9,9 @@ namespace GameTags
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Crouch,				  "InputTag.Crouch");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Sprint,				  "InputTag.Sprint");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Aim,				  "InputTag.Aim");
-	UE_DEFINE_GAMEPLAY_TAG(InputTag_Ability_Reload,				  "InputTag.Ability.Reload");
-	UE_DEFINE_GAMEPLAY_TAG(InputTag_Ability_Shoot,				  "InputTag.Ability.Shoot");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Ability_Reload,		  "InputTag.Ability.Reload");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Ability_Shoot,		  "InputTag.Ability.Shoot");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_UI_WeaponMenu,        "InputTag.UI.WeaponMenu")
 
 	
 	//////Movement//////

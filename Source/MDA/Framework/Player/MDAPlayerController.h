@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MDAPlayerController.generated.h"
 
+class UMDAInputConfig;
 class UInputMappingContext;
 /**
  * 
@@ -19,7 +20,10 @@ class MDA_API AMDAPlayerController : public APlayerController
 public:
 	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")
-	TArray<UInputMappingContext*> PlayerInputMappingContext;
+	TArray<UInputMappingContext*> PlayerInputMappingContexts;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UMDAInputConfig> InputConfig;
 	
 	//Forwarding to ability system for ability activation
 	virtual void PostProcessInput(const float DeltaTime, const bool bGamePaused) override;
@@ -28,5 +32,8 @@ protected:
 	virtual void SetupInputComponent() override;
 	
 	
-	
+	////UI////
+	//Weapon Menu
+	void Input_ToggleWeaponMenu();
+	bool CanOpenWeaponMenu();
 };
