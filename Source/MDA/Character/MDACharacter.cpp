@@ -32,6 +32,13 @@ AMDACharacter::AMDACharacter(const FObjectInitializer& ObjectInitializer):Super(
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	ThirdPersonCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	GetMesh()->EnableExternalInterpolation(true);
+	
+	WeaponMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
+	WeaponMeshComponent->SetupAttachment(GetMesh(), "HandGrip_R");
+	WeaponMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	
+	
 }
 
 void AMDACharacter::BeginPlay()
@@ -45,12 +52,21 @@ void AMDACharacter::PossessedBy(AController* NewController)
 	InitAbilitySystemComponent();
 	
 	GiveAbilities();
+	
+	if (AMDAPlayerState* PS = GetPlayerState<AMDAPlayerState>())
+	{
+		PS->UpdateWeaponMesh();
+	}
 }
 
 void AMDACharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitAbilitySystemComponent();
+	if (AMDAPlayerState* PS = GetPlayerState<AMDAPlayerState>())
+	{
+		PS->UpdateWeaponMesh();
+	}
 }
 
 void AMDACharacter::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)

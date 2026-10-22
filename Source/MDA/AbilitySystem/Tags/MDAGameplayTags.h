@@ -14,6 +14,8 @@ namespace GameTags
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Aim);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Ability_Reload);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Ability_Shoot);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Ability_EquipPrimary);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_Ability_EquipSecondary);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(InputTag_UI_WeaponMenu);
 
 	
@@ -27,5 +29,9 @@ namespace GameTags
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Aiming);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_Mantling);
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement_State_SprintRecovery);
+	
+	
+	////Player State////
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
 	
 }

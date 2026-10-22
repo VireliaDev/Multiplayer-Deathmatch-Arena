@@ -5,6 +5,8 @@
 
 #include "AbilitySystemComponent.h"
 #include "MDA/AbilitySystem/MDAAbilitySystemComponent.h"
+#include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
+#include "MDA/Character/MDACharacter.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogPlayerState);
@@ -64,7 +66,7 @@ void AMDAPlayerState::InitWeaponSystem()
 	default:
 		break;
 	}
-	CurrentSlot = StartingWeapon->WeaponSlot;
+	SetCurrentSlot(StartingWeapon->WeaponSlot);
 }
 
 void AMDAPlayerState::RequestNewWeapon_Implementation(UMDAWeaponAsset* RequestedWeapon)
@@ -86,7 +88,7 @@ void AMDAPlayerState::RequestNewWeapon_Implementation(UMDAWeaponAsset* Requested
 
 UMDAWeaponAsset* AMDAPlayerState::GetCurrentWeapon() const
 {
-	switch (CurrentSlot)
+	switch (GetCurrentSlot())
 	{
 	case EWeaponSlot::Primary:
 		return PrimaryWeapon;
@@ -94,6 +96,35 @@ UMDAWeaponAsset* AMDAPlayerState::GetCurrentWeapon() const
 		return  SecondaryWeapon;
 	default:
 		return nullptr;
+	}
+}
+
+void AMDAPlayerState::SetCurrentSlot(const EWeaponSlot NewSlot)
+{
+	if (!HasAuthority()) return;
+	CurrentSlot = NewSlot;
+	UpdateWeaponMesh();
+}
+
+EWeaponSlot AMDAPlayerState::GetCurrentSlot() const
+{
+	//TODO: add prediction check
+	return CurrentSlot;
+}
+
+UMDAWeaponAsset* AMDAPlayerState::GetWeaponAtSlot(const EWeaponSlot Slot) const
+{
+	switch (Slot)
+	{
+	case EWeaponSlot::Primary:
+		return PrimaryWeapon;
+	
+	case EWeaponSlot::Secondary:
+		return SecondaryWeapon;
+	
+	default:
+		return nullptr;
+		
 	}
 }
 
@@ -107,7 +138,7 @@ bool AMDAPlayerState::GiveNewWeapon(UMDAWeaponAsset* NewWeapon)
 			return false;
 		case EWeaponSlot::Primary:
 			PrimaryWeapon = NewWeapon;
-			CurrentSlot = EWeaponSlot::Primary;
+			SetCurrentSlot(EWeaponSlot::Primary);
 			return true;
 		case EWeaponSlot::Secondary:
 			SecondaryWeapon = NewWeapon;
@@ -117,6 +148,35 @@ bool AMDAPlayerState::GiveNewWeapon(UMDAWeaponAsset* NewWeapon)
 	return false;
 }
 
-void AMDAPlayerState::OnRep_CurrentWeapon()
+void AMDAPlayerState::OnRep_CurrentSlot()
 {
+	UpdateWeaponMesh();
+}
+
+void AMDAPlayerState::OnRep_PrimaryWeapon()
+{
+	UpdateWeaponMesh();
+}
+
+void AMDAPlayerState::OnRep_SecondaryWeapon()
+{
+	UpdateWeaponMesh();
+}
+
+void AMDAPlayerState::UpdateWeaponMesh()
+{
+	const AMDACharacter* MDACharacter = GetPawn<AMDACharacter>();
+	if (!MDACharacter)
+	{
+		return; //No character exists, or the character is unpossessed (Dead) and the weapon mesh shouldn't change yet
+	}
+	
+	if (const UMDAWeaponAsset* CurrentWeapon = GetCurrentWeapon())
+	{
+			MDACharacter->WeaponMeshComponent->SetSkeletalMeshAsset(CurrentWeapon->WeaponMesh);
+	}
+	else
+	{
+		MDACharacter->WeaponMeshComponent->SetSkeletalMeshAsset(nullptr);
+	}
 }

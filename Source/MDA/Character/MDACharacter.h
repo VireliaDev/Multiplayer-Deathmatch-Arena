@@ -34,12 +34,15 @@ public:
 	
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
-	//Camera
+	//Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly , Category="Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> ThirdPersonCamera;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon Mesh", meta=( AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> WeaponMeshComponent;
 	
 	
 	//Input

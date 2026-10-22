@@ -25,6 +25,7 @@ class MDA_API AMDAPlayerState : public APlayerState, public IAbilitySystemInterf
 public:
 	AMDAPlayerState();
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -46,16 +47,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon System")
 	TObjectPtr<UMDAWeaponAsset> StartingWeapon;
 	
-	UPROPERTY(Replicated, VisibleAnywhere)
+	UPROPERTY(ReplicatedUsing = OnRep_PrimaryWeapon, VisibleAnywhere)
 	TObjectPtr<UMDAWeaponAsset> PrimaryWeapon;
 
-	UPROPERTY(Replicated, VisibleAnywhere)
+	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon, VisibleAnywhere)
 	TObjectPtr<UMDAWeaponAsset> SecondaryWeapon;
 	
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon, VisibleAnywhere)
-	EWeaponSlot CurrentSlot = EWeaponSlot::Secondary;
 	
 	void InitWeaponSystem();
+	
 	
 	
 public:
@@ -65,9 +65,27 @@ public:
 	
 	UMDAWeaponAsset* GetCurrentWeapon() const;
 	
+	void SetCurrentSlot(EWeaponSlot NewSlot);
+	EWeaponSlot GetCurrentSlot() const ;
+	
+	UMDAWeaponAsset* GetWeaponAtSlot(EWeaponSlot Slot) const;
+	
+	
+	void UpdateWeaponMesh();
+
 private:
 	bool GiveNewWeapon(UMDAWeaponAsset* NewWeapon);
 	
 	UFUNCTION()
-	void OnRep_CurrentWeapon();
+	void OnRep_CurrentSlot();
+	
+	UFUNCTION()
+	void OnRep_PrimaryWeapon();
+	
+	UFUNCTION()
+	void OnRep_SecondaryWeapon();
+	
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentSlot, VisibleAnywhere)
+	EWeaponSlot CurrentSlot = EWeaponSlot::None;
+	
 };

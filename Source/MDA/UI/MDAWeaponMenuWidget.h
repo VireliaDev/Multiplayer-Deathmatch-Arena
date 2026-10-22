@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MDAWeaponMenuWidget.generated.h"
 
+class UVerticalBox;
 class UMDAWeaponButtonWidget;
 class UUniformGridPanel;
 class UMDAWeaponAsset;
@@ -23,8 +24,8 @@ public:
 	void Populate(const TArray<UMDAWeaponAsset*>& Weapons);
 
 protected:
-	UPROPERTY(meta=(BindWidget)) 
-	TObjectPtr<UUniformGridPanel> WeaponGridPanel;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UVerticalBox> WeaponsVerticalBox;
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon Menu")
 	TSubclassOf<UMDAWeaponButtonWidget> WeaponButtonClass;

@@ -27,8 +27,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cosmetic")
 	FText WeaponName;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cosmetic")
+	TObjectPtr<USkeletalMesh> WeaponMesh;
 	
-	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cosmetic")
+	TObjectPtr<UAnimMontage> WeaponEquipMontage;
 	
 	////Gameplay////
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")
