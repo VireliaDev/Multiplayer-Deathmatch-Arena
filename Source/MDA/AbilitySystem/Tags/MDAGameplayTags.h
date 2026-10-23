@@ -33,5 +33,8 @@ namespace GameTags
 	
 	////Player State////
 	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Equipping);
 	
+	////Events////
+	MDA_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Weapon_EquipPrimary);
 }

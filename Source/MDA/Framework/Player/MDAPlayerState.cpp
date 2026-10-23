@@ -75,9 +75,9 @@ void AMDAPlayerState::RequestNewWeapon_Implementation(UMDAWeaponAsset* Requested
 	{
 		if (RequestedWeapon != PrimaryWeapon && RequestedWeapon != SecondaryWeapon)
 		{
-			const bool Result = GiveNewWeapon(RequestedWeapon);
+			const bool bSuccess = GiveNewWeapon(RequestedWeapon);
 		
-			if (!Result)
+			if (!bSuccess)
 			{
 				UE_LOG(LogPlayerState, Error, TEXT("Failed To give requested weapon."))
 			}
@@ -108,8 +108,24 @@ void AMDAPlayerState::SetCurrentSlot(const EWeaponSlot NewSlot)
 
 EWeaponSlot AMDAPlayerState::GetCurrentSlot() const
 {
-	//TODO: add prediction check
+	if (PredictedSlot != EWeaponSlot::None)
+	{
+		return PredictedSlot;
+	}
 	return CurrentSlot;
+}
+
+void AMDAPlayerState::SetPredictedSlot(const EWeaponSlot NewSlot)
+{
+	if (NewSlot != CurrentSlot)
+	{
+		PredictedSlot = EWeaponSlot::None;
+	}
+	else
+	{
+		PredictedSlot = NewSlot;
+	}
+	UpdateWeaponMesh();
 }
 
 UMDAWeaponAsset* AMDAPlayerState::GetWeaponAtSlot(const EWeaponSlot Slot) const
@@ -139,7 +155,12 @@ bool AMDAPlayerState::GiveNewWeapon(UMDAWeaponAsset* NewWeapon)
 		case EWeaponSlot::Primary:
 			PrimaryWeapon = NewWeapon;
 			SetCurrentSlot(EWeaponSlot::Primary);
-			return true;
+			if (APawn* Pawn = GetPawn())
+			{
+				FGameplayEventData Payload;
+				Payload.OptionalObject = NewWeapon;
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Pawn, GameTags::Event_Weapon_EquipPrimary, Payload);
+			}			return true;
 		case EWeaponSlot::Secondary:
 			SecondaryWeapon = NewWeapon;
 			return true;
@@ -150,6 +171,10 @@ bool AMDAPlayerState::GiveNewWeapon(UMDAWeaponAsset* NewWeapon)
 
 void AMDAPlayerState::OnRep_CurrentSlot()
 {
+	if (CurrentSlot == PredictedSlot)
+	{
+		PredictedSlot = EWeaponSlot::None;
+	}
 	UpdateWeaponMesh();
 }
 
@@ -163,7 +188,7 @@ void AMDAPlayerState::OnRep_SecondaryWeapon()
 	UpdateWeaponMesh();
 }
 
-void AMDAPlayerState::UpdateWeaponMesh()
+void AMDAPlayerState::UpdateWeaponMesh() const
 {
 	const AMDACharacter* MDACharacter = GetPawn<AMDACharacter>();
 	if (!MDACharacter)

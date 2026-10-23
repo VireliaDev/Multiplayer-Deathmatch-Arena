@@ -11,12 +11,10 @@
 
 UMDAGameplayAbility_Shoot::UMDAGameplayAbility_Shoot()
 {
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
-	InstancingPolicy   = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-
 	ActivationBlockedTags.AddTag(GameTags::Movement_State_Sprinting);
 	ActivationBlockedTags.AddTag(GameTags::Movement_State_SprintRecovery);
 	ActivationBlockedTags.AddTag(GameTags::Movement_State_Mantling);
+	ActivationBlockedTags.AddTag(GameTags::State_Equipping);
 }
 
 void UMDAGameplayAbility_Shoot::ActivateAbility(const FGameplayAbilitySpecHandle Handle,

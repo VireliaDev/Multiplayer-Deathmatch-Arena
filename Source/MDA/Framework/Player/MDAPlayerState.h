@@ -68,10 +68,12 @@ public:
 	void SetCurrentSlot(EWeaponSlot NewSlot);
 	EWeaponSlot GetCurrentSlot() const ;
 	
+	void SetPredictedSlot(EWeaponSlot NewSlot);
+	
 	UMDAWeaponAsset* GetWeaponAtSlot(EWeaponSlot Slot) const;
 	
 	
-	void UpdateWeaponMesh();
+	void UpdateWeaponMesh() const;
 
 private:
 	bool GiveNewWeapon(UMDAWeaponAsset* NewWeapon);
@@ -87,5 +89,8 @@ private:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentSlot, VisibleAnywhere)
 	EWeaponSlot CurrentSlot = EWeaponSlot::None;
+	
+	UPROPERTY(VisibleAnywhere)
+	EWeaponSlot PredictedSlot = EWeaponSlot::None;
 	
 };

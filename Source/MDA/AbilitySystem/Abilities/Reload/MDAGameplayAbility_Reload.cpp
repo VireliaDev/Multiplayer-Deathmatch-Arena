@@ -11,11 +11,8 @@
 
 UMDAGameplayAbility_Reload::UMDAGameplayAbility_Reload()
 {
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
-	InstancingPolicy   = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	
 	ActivationBlockedTags.AddTag(GameTags::Movement_State_Mantling);
-	
+	ActivationBlockedTags.AddTag(GameTags::State_Equipping);
 }
 
 void UMDAGameplayAbility_Reload::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)

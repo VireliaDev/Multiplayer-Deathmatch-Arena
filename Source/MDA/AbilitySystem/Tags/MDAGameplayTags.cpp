@@ -28,4 +28,8 @@ namespace GameTags
 	
 	////Player State////
 	UE_DEFINE_GAMEPLAY_TAG(State_Dead,					  "State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(State_Equipping,				  "State.Equipping");
+	
+	////Events////
+	UE_DEFINE_GAMEPLAY_TAG(Event_Weapon_EquipPrimary,					  "Event.Weapon.EquipPrimary");
 }

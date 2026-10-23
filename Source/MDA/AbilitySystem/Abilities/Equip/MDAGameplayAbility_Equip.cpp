@@ -3,6 +3,7 @@
 
 #include "MDAGameplayAbility_Equip.h"
 
+#include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "MDA/AbilitySystem/Tags/MDAGameplayTags.h"
 #include "MDA/Character/MDACharacter.h"
@@ -11,6 +12,7 @@
 UMDAGameplayAbility_Equip::UMDAGameplayAbility_Equip()
 {
 	ActivationBlockedTags.AddTag(GameTags::State_Dead);
+	ActivationOwnedTags.AddTag(GameTags::State_Equipping);
 }
 
 void UMDAGameplayAbility_Equip::OnMontageOver()
@@ -24,15 +26,25 @@ void UMDAGameplayAbility_Equip::ActivateAbility(const FGameplayAbilitySpecHandle
 
 	const AMDACharacter* Character = GetMDACharacterFromActorInfo(ActorInfo);
 	AMDAPlayerState* PlayerState = Character ? Character->GetMDAPlayerState() : nullptr;
-	const UMDAWeaponAsset* WeaponToEquip = PlayerState ? PlayerState->GetWeaponAtSlot(TargetSlot) : nullptr;
+	const UMDAWeaponAsset* WeaponToEquip = nullptr;
+	if (TriggerEventData)
+	{
+		WeaponToEquip = Cast<UMDAWeaponAsset>(TriggerEventData->OptionalObject);
+	}
+	if (!WeaponToEquip && PlayerState)
+	{
+		WeaponToEquip = PlayerState->GetWeaponAtSlot(TargetSlot);
+	}
+	
 
-	if (!WeaponToEquip || !WeaponToEquip->WeaponEquipMontage || !PlayerState || !Character)
+	if (!WeaponToEquip || !PlayerState || !Character)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	
-	if (PlayerState->GetCurrentSlot() == TargetSlot)
+	//Check that the ability isn't changing to the same slot (and that it was activated not by an event, ie it was from user input)
+	if (!TriggerEventData && PlayerState->GetCurrentSlot() == TargetSlot) 
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -42,6 +54,21 @@ void UMDAGameplayAbility_Equip::ActivateAbility(const FGameplayAbilitySpecHandle
 	{
 		PlayerState->SetCurrentSlot(TargetSlot);
 	}
+	else if (IsPredictingClient())
+	{
+		PlayerState->SetPredictedSlot(TargetSlot);
+		FPredictionKey Key = ActorInfo->AbilitySystemComponent->ScopedPredictionKey;
+		if (Key.IsValidKey())
+		{
+			Key.NewRejectedDelegate().BindUObject(this, &UMDAGameplayAbility_Equip::OnPredictionRejected);
+		}
+	}
+	
+	if (!WeaponToEquip->WeaponEquipMontage)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
 
 	UAbilityTask_PlayMontageAndWait* MontageAndWait = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this, NAME_None, WeaponToEquip->WeaponEquipMontage);
@@ -50,4 +77,13 @@ void UMDAGameplayAbility_Equip::ActivateAbility(const FGameplayAbilitySpecHandle
 	MontageAndWait->OnInterrupted.AddDynamic(this, &UMDAGameplayAbility_Equip::OnMontageOver);
 	MontageAndWait->OnCancelled.AddDynamic(this, &UMDAGameplayAbility_Equip::OnMontageOver);
 	MontageAndWait->ReadyForActivation();
+}
+
+void UMDAGameplayAbility_Equip::OnPredictionRejected()
+{
+	const AMDACharacter* Character = GetMDACharacterFromActorInfo(GetCurrentActorInfo());
+	if (AMDAPlayerState* PlayerState = Character ? Character->GetMDAPlayerState() : nullptr)
+	{
+		PlayerState->SetPredictedSlot(EWeaponSlot::None);
+	}
 }

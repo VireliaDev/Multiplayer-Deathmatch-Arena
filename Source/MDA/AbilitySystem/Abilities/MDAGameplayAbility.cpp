@@ -9,6 +9,8 @@
 
 UMDAGameplayAbility::UMDAGameplayAbility()
 {
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+	InstancingPolicy   = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
 void UMDAGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
