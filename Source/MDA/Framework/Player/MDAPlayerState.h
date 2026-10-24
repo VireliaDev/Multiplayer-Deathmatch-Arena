@@ -31,7 +31,7 @@ protected:
 	
 
 	
-	/////////////////Ability System Component////////////////
+	////Ability System Component////
 protected:
 	UPROPERTY()
 	TObjectPtr<UMDAAbilitySystemComponent> AbilitySystemComponent;
@@ -53,11 +53,8 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon, VisibleAnywhere)
 	TObjectPtr<UMDAWeaponAsset> SecondaryWeapon;
 	
-	
 	void InitWeaponSystem();
-	
-	
-	
+
 public:
 	
 	UFUNCTION(Server, Reliable)
@@ -77,6 +74,7 @@ public:
 
 private:
 	bool GiveNewWeapon(UMDAWeaponAsset* NewWeapon);
+	void SetNewWeaponAmmoAttributeValues(UMDAWeaponAsset* NewWeapon);
 	
 	UFUNCTION()
 	void OnRep_CurrentSlot();

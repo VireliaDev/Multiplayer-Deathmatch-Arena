@@ -17,6 +17,22 @@ UMDAGameplayAbility_Shoot::UMDAGameplayAbility_Shoot()
 	ActivationBlockedTags.AddTag(GameTags::State_Equipping);
 }
 
+UGameplayEffect* UMDAGameplayAbility_Shoot::GetCostGameplayEffect() const
+{
+	if (const AMDACharacter* Character = GetMDACharacterFromActorInfo(GetCurrentActorInfo()))
+	{
+		if (const AMDAPlayerState* PlayerState = Character->GetMDAPlayerState())
+		{
+			const UMDAWeaponAsset* CurrentWeapon = PlayerState->GetCurrentWeapon();
+			if (CurrentWeapon->WeaponAmmoCostGameplayEffect)
+			{
+				return CurrentWeapon->WeaponAmmoCostGameplayEffect.GetDefaultObject();
+			}
+		}
+	}
+	return nullptr;
+}
+
 void UMDAGameplayAbility_Shoot::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
@@ -61,3 +77,4 @@ void UMDAGameplayAbility_Shoot::OnMantle()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
+

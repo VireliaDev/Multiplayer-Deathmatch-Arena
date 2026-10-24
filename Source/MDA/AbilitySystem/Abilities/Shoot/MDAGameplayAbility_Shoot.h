@@ -15,6 +15,9 @@ class MDA_API UMDAGameplayAbility_Shoot : public UMDAGameplayAbility
 public:
 	UMDAGameplayAbility_Shoot();
 	
+	//Override to return weapon specific cost (ammo consumption)
+	virtual UGameplayEffect* GetCostGameplayEffect() const override;
+
 	
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffect.h"
 #include "Engine/DataAsset.h"
 #include "MDAWeaponAsset.generated.h"
 
@@ -42,4 +43,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")
 	float ReserveAmmoSize = 0;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")
+	TSubclassOf<UGameplayEffect> WeaponAmmoCostGameplayEffect;
 };
